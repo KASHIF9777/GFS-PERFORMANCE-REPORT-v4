@@ -1,0 +1,1516 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#07111F">
+<title>GFS Express | Hub Performance Command Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root{
+  --navy:#07111f;--blue:#2667a8;--blue-bright:#3b8bd8;--red:#e31b35;--violet:#7c3aed;--violet-bright:#a78bfa;
+  --bg:#f4f7fb;--paper:#fff;--ink:#07111f;--muted:#64748b;--line:#dfe6ee;
+  --green:#13996c;--amber:#c07c14;
+  --soft-blue:#eaf2fa;--soft-red:#fdecef;--soft-green:#e5f5ee;--soft-amber:#fdf3e2;--soft-violet:#f1ecfe;
+  --surface-muted:#f8fafc;--surface-hover:#f1f6fc;--surface-input:#f8fbfe;
+  --shadow-sm:0 1px 3px rgba(7,17,31,.05);--shadow:0 4px 16px rgba(7,17,31,.06);
+  --shadow-lg:0 12px 32px rgba(7,17,31,.12);--shadow-xl:0 24px 60px rgba(7,17,31,.18);
+  --sidebar-bg:#07111f;--logo-glow:rgba(42,137,240,.4);
+  --r:10px;--r-sm:6px;--r-lg:14px;--sidebar:252px;
+  --ease:cubic-bezier(.22,1,.36,1);--ease-back:cubic-bezier(.34,1.56,.64,1);
+}
+[data-theme="dark"]{
+  --bg:#050e1b;--paper:#0b1929;--ink:#e8eef6;--muted:#8fa4bc;--line:#1e3249;
+  --green:#2ec48a;--amber:#f0a442;
+  --soft-blue:#0f2544;--soft-red:#3b1520;--soft-green:#0e3025;--soft-amber:#2d1f0e;--soft-violet:#241539;
+  --surface-muted:#0d1e33;--surface-hover:#122441;--surface-input:#0a1828;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.35);--shadow:0 4px 16px rgba(0,0,0,.4);
+  --shadow-lg:0 12px 32px rgba(0,0,0,.5);--shadow-xl:0 24px 60px rgba(0,0,0,.55);
+  --sidebar-bg:#030a14;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Inter",-apple-system,Arial,sans-serif;font-size:14px;-webkit-font-smoothing:antialiased;transition:background .3s var(--ease),color .3s var(--ease)}
+h1,h2,h3,h4{font-family:"Space Grotesk",sans-serif;letter-spacing:-.02em}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid rgba(38,103,168,.28);outline-offset:2px}
+.hidden{display:none!important}
+.mono{font-family:"JetBrains Mono",monospace}
+.icon{width:17px;height:17px;display:block;flex-shrink:0}
+
+/* UPLOAD */
+.upload-screen{min-height:100vh;background:var(--bg);display:grid;grid-template-columns:minmax(240px,36%) 1fr}
+.upload-brand{background:var(--sidebar-bg);color:#fff;padding:clamp(28px,5vw,72px);display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}
+.upload-brand::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 600px 400px at 20% 20%,rgba(42,137,240,.15),transparent 65%),radial-gradient(ellipse 500px 400px at 80% 90%,rgba(124,58,237,.08),transparent 60%)}
+.gfs-logo{position:relative;display:inline-block;width:152px}
+.gfs-logo svg{display:block;width:100%;height:auto;border-radius:14px;box-shadow:0 14px 40px rgba(0,0,0,.45),0 0 0 1px rgba(94,158,255,.14),0 0 60px var(--logo-glow);position:relative;z-index:1}
+.gfs-logo::before{content:"";position:absolute;inset:-30%;background:radial-gradient(circle at 50% 50%,var(--logo-glow),transparent 65%);filter:blur(28px);z-index:0}
+.gfs-logo::after{content:"";position:absolute;inset:0;border-radius:14px;background:linear-gradient(115deg,rgba(255,255,255,.18),transparent 35%,transparent 65%,rgba(0,0,0,.15));z-index:2;mix-blend-mode:overlay}
+.eyebrow{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.18em;color:#6f9cc9}
+.upload-brand h1{font:700 clamp(30px,3.6vw,50px)/1.06 "Space Grotesk",sans-serif;margin:18px 0;max-width:620px}
+.upload-brand p{color:rgba(255,255,255,.65);line-height:1.8;max-width:520px}
+.signature{font-size:12px;color:rgba(255,255,255,.45);line-height:1.7}
+.upload-panel{display:flex;align-items:center;justify-content:center;padding:32px;position:relative;overflow-y:auto}
+.theme-float{position:absolute;top:22px;right:22px;z-index:5}
+.import-card{width:min(720px,100%);background:var(--paper);border:1px solid var(--line);box-shadow:var(--shadow-lg);border-radius:var(--r-lg);padding:30px}
+.import-card h2{font:700 22px/1.2 "Space Grotesk",sans-serif;margin:5px 0 8px}
+.import-card p{margin:0;color:var(--muted);line-height:1.6;font-size:13px}
+.privacy{font-size:11px;color:var(--green);font-weight:700;background:var(--soft-green);padding:7px 10px;border-radius:var(--r-sm);white-space:nowrap}
+.import-head{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-bottom:20px}
+.dz-block{margin-bottom:14px}
+.dz-label{display:flex;align-items:center;gap:8px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:8px;font-family:"Space Grotesk",sans-serif}
+.dz-num{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--blue);color:#fff;font-size:10px;font-weight:800}
+.dz-num.rtq{background:var(--violet)}
+.dropzone{border:1.5px dashed #a9bfd5;background:var(--surface-input);border-radius:var(--r);padding:22px 20px;transition:all .3s var(--ease);position:relative;cursor:pointer}
+.dropzone:hover,.dropzone.drag{border-color:var(--blue);background:var(--soft-blue);transform:translateY(-2px)}
+.dropzone.rtq:hover,.dropzone.rtq.drag{border-color:var(--violet);background:var(--soft-violet)}
+.dz-row{display:flex;align-items:center;gap:14px}
+.upload-icon{width:40px;height:40px;border-radius:50%;background:linear-gradient(140deg,var(--blue),var(--blue-bright));color:#fff;display:grid;place-items:center;flex-shrink:0}
+.upload-icon.rtq{background:linear-gradient(140deg,var(--violet),var(--violet-bright))}
+.dz-txt{flex:1;min-width:0;text-align:left}
+.dz-txt strong{font:700 13px "Space Grotesk",sans-serif;display:block;margin-bottom:3px}
+.dz-txt small{display:block;color:var(--muted);font-size:11px;line-height:1.5}
+.dz-tags{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap}
+.dz-tag{font-size:9px;font-weight:700;padding:3px 8px;border-radius:var(--r-sm);background:var(--soft-blue);color:var(--blue)}
+.dz-tag.rtq{background:var(--soft-violet);color:var(--violet)}
+.file-input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;z-index:2}
+.import-foot{margin-top:16px;padding-top:14px;border-top:1px solid var(--line);font-size:11px;color:var(--muted);text-align:center;line-height:1.7}
+
+/* SHELL */
+.shell{display:grid;grid-template-columns:var(--sidebar) minmax(0,1fr);min-height:100vh}
+.sidebar{position:fixed;inset:0 auto 0 0;width:var(--sidebar);background:var(--sidebar-bg);color:#fff;padding:18px 12px;display:flex;flex-direction:column;z-index:30;overflow-y:auto}
+.side-logo{width:104px;margin:2px 10px 20px;flex-shrink:0}
+.nav-label{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.35);font-weight:700;padding:0 12px;margin:12px 0 4px}
+.nav-label.rtq{color:rgba(167,139,250,.55)}
+.nav-btn{width:100%;border:0;background:transparent;color:rgba(255,255,255,.62);padding:8px 11px;border-radius:var(--r-sm);display:flex;align-items:center;gap:10px;text-align:left;font-size:11.5px;font-weight:600;transition:all .22s var(--ease)}
+.nav-btn:hover{color:#fff;background:rgba(255,255,255,.06);padding-left:14px}
+.nav-btn.active{color:#fff;background:linear-gradient(90deg,rgba(38,103,168,.35),rgba(38,103,168,.15));box-shadow:inset 3px 0 0 #fff}
+.nav-btn.rtq.active{background:linear-gradient(90deg,rgba(124,58,237,.35),rgba(124,58,237,.15))}
+.side-status{margin-top:auto;border:1px solid rgba(255,255,255,.1);background:rgba(18,52,91,.4);padding:12px;border-radius:var(--r-sm);flex-shrink:0}
+.status-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.dot{width:8px;height:8px;border-radius:50%;background:#27c98b;box-shadow:0 0 0 4px rgba(39,201,139,.12)}
+.side-status strong{font-size:11px}
+.side-status div:last-child{font-size:10px;color:rgba(255,255,255,.45);line-height:1.5}
+.main{grid-column:2;min-width:0;display:flex;flex-direction:column;min-height:100vh}
+
+.topbar{height:60px;padding:0 20px;background:var(--paper);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20;gap:14px}
+.topbar h1{font:700 16px "Space Grotesk",sans-serif;margin:0}
+.topbar p{font-size:10px;color:var(--muted);margin:3px 0 0}
+.toolbar{display:flex;gap:8px;align-items:center}
+.btn{border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:8px 12px;border-radius:var(--r-sm);font-size:11px;font-weight:600;display:inline-flex;gap:6px;align-items:center;justify-content:center;transition:all .22s var(--ease);white-space:nowrap}
+.btn:hover{border-color:#9db7d2;background:var(--surface-hover);transform:translateY(-1px)}
+.btn.primary{background:var(--red);border-color:var(--red);color:#fff}
+.btn.dark{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn.violet{background:var(--violet);border-color:var(--violet);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.icon-only{width:36px;padding:8px}
+.btn.sm{padding:6px 10px;font-size:10.5px}
+
+.tabbar{height:40px;padding:0 12px;background:var(--surface-muted);border-bottom:1px solid var(--line);display:flex;align-items:flex-end;gap:2px;position:sticky;top:60px;z-index:15;overflow-x:auto}
+.tab-item{display:flex;align-items:center;gap:6px;padding:6px 7px 6px 10px;background:transparent;border:1px solid transparent;border-bottom:0;border-radius:8px 8px 0 0;font-size:10.5px;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap;max-width:180px;min-width:100px;transition:all .22s var(--ease);flex-shrink:0}
+.tab-item:hover{background:var(--surface-hover);color:var(--ink)}
+.tab-item.active{background:var(--paper);color:var(--ink);border-color:var(--line);border-bottom-color:var(--paper);margin-bottom:-1px;box-shadow:0 -2px 8px rgba(7,17,31,.04);z-index:1}
+.tab-item.active::before{content:"";position:absolute;top:0;left:11px;right:11px;height:2px;background:linear-gradient(90deg,var(--blue),var(--blue-bright));border-radius:2px 2px 0 0}
+.tab-item.rtq.active::before{background:linear-gradient(90deg,var(--violet),var(--violet-bright))}
+.tab-item{position:relative}
+.tab-title{overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+.tab-close{width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--muted);opacity:0;transition:all .18s;font-size:13px;line-height:1;font-weight:600}
+.tab-item:hover .tab-close,.tab-item.active .tab-close{opacity:.7}
+.tab-close:hover{background:var(--soft-red);color:var(--red);opacity:1;transform:rotate(90deg)}
+.tab-new{width:26px;height:26px;margin-bottom:5px;margin-left:6px;border-radius:var(--r-sm);background:transparent;border:1px dashed var(--line);color:var(--muted);display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative}
+.tab-new:hover{background:var(--soft-blue);color:var(--blue);border-color:var(--blue);border-style:solid}
+.tab-new-menu{position:absolute;top:100%;right:0;margin-top:8px;background:var(--paper);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow-lg);padding:6px;min-width:220px;display:none;z-index:900;max-height:70vh;overflow-y:auto}
+.tab-new-menu.open{display:block}
+.tab-new-menu .menu-sec{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);padding:8px 10px 4px}
+.tab-new-menu button{width:100%;padding:7px 10px;border-radius:var(--r-sm);background:transparent;border:0;text-align:left;font-size:11px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:9px}
+.tab-new-menu button:hover{background:var(--soft-blue);color:var(--blue);padding-left:14px}
+.tab-new-menu button.rtq:hover{background:var(--soft-violet);color:var(--violet)}
+
+/* CONTENT */
+.content{padding:20px 22px 50px;max-width:1720px;margin:auto;width:100%;flex:1}
+.section{display:none}
+.section.active{display:block}
+.subhead{display:flex;justify-content:space-between;align-items:flex-end;margin:4px 0 14px;gap:16px;flex-wrap:wrap}
+.subhead h2{font:700 22px "Space Grotesk",sans-serif;margin:0}
+.subhead p{color:var(--muted);font-size:11px;margin:5px 0 0}
+.subhead-actions{display:flex;gap:6px;flex-wrap:wrap}
+
+/* FILTER BAR — z-index fixed */
+.filter-bar{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;margin-bottom:16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;position:relative;z-index:10}
+.filter-bar.ms-active{z-index:600}
+.filter-bar .filter-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding-right:2px}
+.filter-bar .spacer{flex:1}
+.filter-summary{font-size:11px;color:var(--muted);font-weight:600;font-family:"JetBrains Mono",monospace}
+.filter-summary b{color:var(--violet);font-weight:800}
+.filter-toggle{background:var(--soft-violet);border:1px solid rgba(124,58,237,.2);color:var(--violet);padding:7px 12px;border-radius:var(--r-sm);font-size:11px;font-weight:700;cursor:pointer}
+.filter-advanced{display:none;width:100%;padding-top:10px;border-top:1px dashed var(--line);margin-top:10px;gap:8px;flex-wrap:wrap}
+.filter-advanced.open{display:flex}
+
+/* MULTI-SELECT */
+.ms{position:relative}
+.ms.open{z-index:700}
+.ms-btn{display:flex;align-items:center;gap:6px;padding:0 10px;height:34px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--paper);color:var(--ink);font-size:11px;font-weight:600;cursor:pointer;transition:all .22s;min-width:112px}
+.ms-btn:hover{border-color:#9db7d2;background:var(--surface-hover)}
+.ms.open .ms-btn{border-color:var(--blue);background:var(--soft-blue);color:var(--blue)}
+.ms.open.rtq .ms-btn{border-color:var(--violet);background:var(--soft-violet);color:var(--violet)}
+.ms-lbl{font-size:11px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ms-val{margin-left:auto;font-size:9px;font-weight:700;color:var(--muted);font-family:"JetBrains Mono",monospace;background:var(--surface-muted);padding:2px 6px;border-radius:10px}
+.ms.has-value .ms-val{background:var(--blue);color:#fff}
+.ms.has-value.rtq .ms-val{background:var(--violet);color:#fff}
+.ms-drop{position:absolute;top:calc(100% + 6px);left:0;min-width:260px;max-width:380px;background:var(--paper);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow-xl);padding:8px;display:none;z-index:800}
+.ms.open .ms-drop{display:block}
+.ms-head{display:flex;gap:5px;margin-bottom:6px}
+.ms-search{width:100%;height:28px;padding:0 8px;border:1px solid var(--line);border-radius:var(--r-sm);font-size:11px;background:var(--surface-input);color:var(--ink);margin-bottom:6px;outline:none}
+.ms-head button{flex:1;padding:5px 8px;font-size:10px;font-weight:700;background:var(--surface-muted);border:1px solid var(--line);border-radius:var(--r-sm);color:var(--muted);cursor:pointer}
+.ms-head button:hover{background:var(--soft-blue);color:var(--blue);border-color:var(--blue)}
+.ms-head button.rtq-btn:hover{background:var(--soft-violet);color:var(--violet);border-color:var(--violet)}
+.ms-list{max-height:260px;overflow:auto;display:flex;flex-direction:column;gap:1px}
+.ms-item{display:flex;align-items:center;gap:8px;padding:6px 9px;border-radius:var(--r-sm);font-size:11px;font-weight:500;cursor:pointer;color:var(--ink)}
+.ms-item:hover{background:var(--surface-hover)}
+.ms-item input{width:13px;height:13px;accent-color:var(--blue);cursor:pointer}
+.ms.open.rtq .ms-item input{accent-color:var(--violet)}
+.ms-item .ms-count{margin-left:auto;font-size:9px;font-weight:700;color:var(--muted);font-family:"JetBrains Mono",monospace;background:var(--surface-muted);padding:1px 6px;border-radius:8px}
+.ms-empty{padding:20px;text-align:center;color:var(--muted);font-size:11px;font-weight:600}
+
+/* DATE RANGE POPOVER */
+.dr{position:relative}
+.dr.open{z-index:700}
+.dr-btn{display:flex;align-items:center;gap:8px;padding:0 12px;height:34px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--paper);color:var(--ink);font-size:11px;font-weight:600;cursor:pointer;transition:all .22s;min-width:180px}
+.dr-btn:hover{border-color:#9db7d2;background:var(--surface-hover)}
+.dr.open .dr-btn{border-color:var(--violet);background:var(--soft-violet);color:var(--violet)}
+.dr-btn svg{width:14px;height:14px;opacity:.7;flex-shrink:0}
+.dr-label{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dr-clear{width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1;color:var(--muted);opacity:.7}
+.dr-clear:hover{background:var(--soft-red);color:var(--red);opacity:1}
+.dr-pop{position:absolute;top:calc(100% + 6px);left:0;background:var(--paper);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow-xl);padding:12px;display:none;z-index:800;min-width:280px}
+.dr.open .dr-pop{display:block}
+.dr-presets{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:10px}
+.dr-presets button{padding:6px 10px;font-size:10.5px;font-weight:600;background:var(--surface-muted);border:1px solid var(--line);border-radius:var(--r-sm);color:var(--ink);cursor:pointer;text-align:left;transition:all .15s}
+.dr-presets button:hover{background:var(--soft-violet);color:var(--violet);border-color:var(--violet)}
+.dr-inputs{display:grid;gap:8px}
+.dr-inputs label{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;color:var(--muted)}
+.dr-inputs input{flex:1;height:32px;border:1px solid var(--line);border-radius:var(--r-sm);padding:0 9px;font-size:11px;background:var(--surface-input);color:var(--ink);outline:none;font-family:"JetBrains Mono",monospace}
+.dr-inputs input:focus{border-color:var(--violet);background:var(--paper)}
+.dr-foot{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.dr-foot .dr-status{font-size:10px;color:var(--muted);font-weight:600;font-family:"JetBrains Mono",monospace}
+
+/* WEIGHT FILTER */
+.weight-filter{display:flex;gap:6px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-sm);padding:4px 4px 4px 10px;height:34px}
+.weight-filter select{border:0;background:transparent;font-size:11px;font-weight:600;color:var(--ink);outline:none;cursor:pointer}
+.weight-filter input{width:70px;border:0;background:transparent;font-size:11px;font-family:"JetBrains Mono",monospace;outline:none;color:var(--violet);font-weight:600}
+.weight-filter input::placeholder{color:var(--muted);font-weight:400}
+.weight-filter .wf-unit{font-size:10px;color:var(--muted);font-weight:600;padding-right:6px}
+.weight-filter.active{border-color:var(--violet);background:var(--soft-violet)}
+
+.control{height:34px;border:1px solid var(--line);background:var(--paper);border-radius:var(--r-sm);color:var(--ink);padding:0 10px;font-size:11px;font-weight:600;min-width:120px;outline:none}
+.control:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(38,103,168,.1)}
+.search{height:34px;border:1px solid var(--line);background:var(--surface-input);border-radius:var(--r-sm);padding:0 12px;width:220px;font-size:11px;color:var(--ink);outline:none}
+.search:focus{border-color:var(--violet);background:var(--paper);box-shadow:0 0 0 3px rgba(124,58,237,.1)}
+
+/* KPI */
+.kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin-bottom:18px}
+@media(max-width:1400px){.kpis{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:760px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:14px;position:relative;overflow:hidden;box-shadow:var(--shadow-sm);animation:kpiIn .5s var(--ease-back) both}
+@keyframes kpiIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.kpi::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--blue),var(--blue-bright))}
+.kpi.violet::before{background:linear-gradient(90deg,var(--violet),var(--violet-bright))}
+.kpi.green::before{background:linear-gradient(90deg,var(--green),#4ade80)}
+.kpi.amber::before{background:linear-gradient(90deg,var(--amber),#fbbf24)}
+.kpi.red::before{background:linear-gradient(90deg,var(--red),#ff5563)}
+.kpi.clickable{cursor:pointer}
+.kpi.clickable:hover{border-color:#9db7d2;box-shadow:var(--shadow-lg);transform:translateY(-3px)}
+.kpi-label{font-size:9px;letter-spacing:.08em;color:var(--muted);font-weight:700;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi-value{font:700 clamp(17px,1.8vw,24px) "Space Grotesk",sans-serif;margin:6px 0 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+.kpi.violet .kpi-value{color:var(--violet)}
+.kpi.green .kpi-value{color:var(--green)}
+.kpi.amber .kpi-value{color:var(--amber)}
+.kpi.red .kpi-value{color:var(--red)}
+.kpi-note{font-size:9.5px;color:var(--muted);font-weight:600}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(320px,.8fr);gap:14px;margin-bottom:14px}
+@media(max-width:1100px){.layout{grid-template-columns:1fr}}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow-sm);overflow:hidden}
+.panel-head{min-height:52px;padding:11px 14px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.panel-title{display:flex;align-items:center;gap:10px;min-width:0}
+.panel-title h3{font:700 11.5px "Space Grotesk",sans-serif;text-transform:uppercase;margin:0;letter-spacing:.05em}
+.badge{font-size:9px;font-weight:700;color:var(--blue);background:var(--soft-blue);padding:3px 8px;border-radius:var(--r-sm);font-family:"JetBrains Mono",monospace}
+.badge.violet{color:var(--violet);background:var(--soft-violet)}
+.chart-pad{padding:14px}
+.chart-wrap{position:relative;width:100%;height:240px}
+
+/* TABLE */
+.table-scroll{overflow:auto;max-height:600px}
+table{border-collapse:collapse;width:100%}
+th{position:sticky;top:0;z-index:2;background:var(--surface-muted);color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.06em;text-align:right;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap;font-weight:700;user-select:none;cursor:pointer}
+th:hover{color:var(--violet)}
+th.sortable{transition:color .15s}
+th.sortable .sort-icon{display:inline-block;margin-left:4px;opacity:.3;font-size:8px;font-family:"JetBrains Mono",monospace}
+th.sortable.asc .sort-icon,th.sortable.desc .sort-icon{opacity:1;color:var(--violet)}
+th.left,td.left{text-align:left}
+td{padding:10px 12px;border-bottom:1px solid var(--line);font-size:11px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--ink)}
+tbody tr{transition:background .18s;cursor:pointer}
+tbody tr:hover{background:var(--surface-hover)}
+.name{font-weight:700;max-width:250px;overflow:hidden;text-overflow:ellipsis}
+.num{padding:3px 8px;border-radius:var(--r-sm);font-family:"JetBrains Mono",monospace;font-weight:600;font-size:11px}
+.num.violet{color:var(--violet);background:var(--soft-violet)}
+.num.green{color:var(--green);background:var(--soft-green)}
+.num.red{color:var(--red);background:var(--soft-red)}
+.num.amber{color:var(--amber);background:var(--soft-amber)}
+.rate{display:inline-flex;align-items:center;justify-content:center;min-width:52px;padding:3px 7px;border-radius:var(--r-sm);font-family:"JetBrains Mono",monospace;font-size:10px;font-weight:600}
+.rate.good{background:var(--soft-green);color:var(--green)}
+.rate.warn{background:var(--soft-amber);color:var(--amber)}
+.rate.bad{background:var(--soft-red);color:var(--red)}
+.empty{padding:44px!important;text-align:center!important;color:var(--muted)}
+.pagination{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;font-size:10px;color:var(--muted);border-top:1px solid var(--line)}
+.pages{display:flex;gap:5px}
+.page-btn{border:1px solid var(--line);background:var(--paper);border-radius:var(--r-sm);min-width:27px;height:27px;font-size:10px;color:var(--ink)}
+.page-btn.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.page-btn:disabled{opacity:.4}
+
+/* METRIC CARDS */
+.section-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media(max-width:1000px){.section-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.section-grid{grid-template-columns:1fr}}
+.metric-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:16px;cursor:pointer;transition:all .25s var(--ease);position:relative;overflow:hidden}
+.metric-card:hover{transform:translateY(-3px);border-color:#9db7d2;box-shadow:var(--shadow-lg)}
+.metric-card .metric-big{font:700 26px "Space Grotesk",sans-serif;margin:6px 0;letter-spacing:-.03em}
+.metric-card h3{font:700 12px "Space Grotesk",sans-serif;margin:0 0 10px}
+.metric-card .mini-list{display:grid;gap:6px;margin-top:10px}
+.metric-card .mini-row{display:flex;justify-content:space-between;border-top:1px solid var(--line);padding-top:6px;font-size:11px;cursor:pointer}
+.metric-card .mini-row:hover{padding-left:4px;color:var(--violet)}
+.metric-card.violet .metric-big{color:var(--violet)}
+
+.status-badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:var(--r-sm);font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.status-badge.sign{background:var(--soft-green);color:var(--green)}
+.status-badge.ofd{background:var(--soft-amber);color:var(--amber)}
+.status-badge.inbound{background:var(--soft-violet);color:var(--violet)}
+.status-badge.other{background:var(--surface-muted);color:var(--muted)}
+
+/* MODAL */
+.modal{position:fixed;inset:0;background:rgba(7,17,31,.72);display:none;align-items:center;justify-content:center;padding:20px;z-index:1000;backdrop-filter:blur(6px)}
+.modal.open{display:flex}
+.modal-box{background:var(--paper);border-radius:var(--r-lg);width:min(1000px,96vw);max-height:88vh;display:flex;flex-direction:column;box-shadow:var(--shadow-xl);overflow:hidden}
+.modal-head{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:var(--surface-muted)}
+.modal-head h3{font:700 15px "Space Grotesk",sans-serif;margin:0}
+.modal-head p{font-size:10px;color:var(--muted);margin:4px 0 0}
+.modal-body{overflow:auto;padding:8px 16px 16px}
+.shipment{display:grid;grid-template-columns:1fr auto;gap:16px;padding:12px 8px;border-bottom:1px solid var(--line);cursor:pointer;border-radius:var(--r-sm)}
+.shipment:hover{background:var(--surface-hover)}
+.shipment strong{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--violet);display:block;margin-bottom:4px;font-weight:600}
+.shipment .meta-1{font-size:11px;font-weight:600;color:var(--ink)}
+.shipment .meta-2{font-size:10px;color:var(--muted);margin-top:3px;font-family:"JetBrains Mono",monospace}
+.shipment .meta-3{font-size:10px;color:var(--red);font-weight:600;margin-top:3px}
+.modal-x{width:32px;height:32px;border-radius:var(--r-sm);background:var(--surface-muted);border:1px solid var(--line);color:var(--muted);font-size:17px;display:flex;align-items:center;justify-content:center}
+.modal-x:hover{background:var(--soft-red);color:var(--red)}
+
+/* TOAST / LOADING */
+.toast{position:fixed;right:22px;bottom:22px;background:var(--navy);color:#fff;padding:12px 18px;border-radius:var(--r);font-size:11px;font-weight:600;z-index:2000;opacity:0;transform:translateY(12px);pointer-events:none;transition:all .35s var(--ease-back);box-shadow:var(--shadow-xl);max-width:400px}
+.toast.show{opacity:1;transform:none}
+.loading{position:fixed;inset:0;background:rgba(244,247,251,.9);display:none;place-items:center;z-index:1500;backdrop-filter:blur(6px)}
+[data-theme="dark"] .loading{background:rgba(5,14,27,.9)}
+.loading.show{display:grid}
+.spinner{width:44px;height:44px;border:3px solid var(--line);border-top-color:var(--violet);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader-box{text-align:center}
+.loader-box strong{font:700 14px "Space Grotesk",sans-serif}
+
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media(max-width:1100px){:root{--sidebar:210px}}
+@media(max-width:760px){.upload-screen{grid-template-columns:1fr}.upload-brand{padding:22px;min-height:220px}.upload-panel{padding:16px}.import-card{padding:20px}.shell{display:block}.sidebar{position:static;width:100%;padding:10px;flex-direction:row;align-items:center;overflow-x:auto}.side-logo{margin:0;width:70px;flex-shrink:0}.sidebar nav,.side-status,.nav-label{display:none}.main{grid-column:auto}.topbar{height:auto;padding:10px;flex-wrap:wrap}.tabbar{top:0}.content{padding:12px}.kpis{grid-template-columns:repeat(2,1fr)}.layout{grid-template-columns:1fr}.section-grid{grid-template-columns:1fr}.tab-item{min-width:80px;font-size:9.5px}}
+</style>
+</head>
+<body>
+<div class="app">
+<section id="uploadScreen" class="upload-screen">
+  <div class="upload-brand">
+    <div>
+      <div class="gfs-logo" id="brandLogo"></div>
+      <div style="margin-top:26px">
+        <div class="eyebrow">AlRass Hub · Operations Intelligence</div>
+        <h1>Performance reporting built for decisive action.</h1>
+        <p>Transform daily OFD exports and RTQ return sheets into driver rankings, delivery intelligence and presentation-ready reports.</p>
+      </div>
+    </div>
+    <div class="signature">Designed and developed by<br><strong>Kashif Bashir · GFS AlRass Hub Supervisor</strong></div>
+  </div>
+  <div class="upload-panel">
+    <div class="theme-float"><button class="btn icon-only" id="themeBtn1"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button></div>
+    <div class="import-card">
+      <div class="import-head"><div><div class="eyebrow">New operational report</div><h2>Import source data</h2><p>Upload one or both files. Each has its own dedicated dashboard.</p></div><span class="privacy">100% local processing</span></div>
+      <div class="dz-block">
+        <div class="dz-label"><span class="dz-num">1</span> OFD Performance Export</div>
+        <div class="dropzone" id="dropzoneOFD">
+          <input id="fileInputOFD" class="file-input" type="file" accept=".xlsx,.xls,.csv,.zip" multiple>
+          <div class="dz-row">
+            <div class="upload-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4m0 0L7 9m5-5 5 5M4 15v4a1 1 0 001 1h14a1 1 0 001-1v-4"/></svg></div>
+            <div class="dz-txt"><strong>Drop OFD file here or click</strong><small>Driver ranking · Failures · COD · Sign rate · Data quality</small><div class="dz-tags"><span class="dz-tag">XLSX</span><span class="dz-tag">XLS</span><span class="dz-tag">CSV</span><span class="dz-tag">ZIP</span></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="dz-block">
+        <div class="dz-label" style="color:var(--violet)"><span class="dz-num rtq">2</span> RTQ Returns File</div>
+        <div class="dropzone rtq" id="dropzoneRTQ">
+          <input id="fileInputRTQ" class="file-input" type="file" accept=".xlsx,.xls,.csv,.zip" multiple>
+          <div class="dz-row">
+            <div class="upload-icon rtq"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 14l-4-4 4-4"/><path d="M5 10h11a4 4 0 010 8h-1"/><path d="M4 15v4a1 1 0 001 1h14a1 1 0 001-1v-4"/></svg></div>
+            <div class="dz-txt"><strong>Drop RTQ file here or click</strong><small>Full returns analytics with filters, sorting and per-section export</small><div class="dz-tags"><span class="dz-tag rtq">ZIP</span><span class="dz-tag rtq">XLSX</span><span class="dz-tag rtq">CSV</span></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="import-foot"><strong style="color:var(--ink)">Hub auto-detected</strong> · Report title updates with the hub name found in your file</div>
+    </div>
+  </div>
+</section>
+
+<section id="reportScreen" class="shell hidden">
+<aside class="sidebar">
+  <div class="gfs-logo side-logo" id="sideLogo"></div>
+  <div class="nav-label">Performance · OFD</div>
+  <nav id="navOFD">
+    <button class="nav-btn" data-section="dashboard">Dashboard</button>
+    <button class="nav-btn" data-section="failures">Failure Analysis</button>
+    <button class="nav-btn" data-section="attempts">OFD Attempts</button>
+    <button class="nav-btn" data-section="cod">COD & Payment</button>
+    <button class="nav-btn" data-section="priority">Priority Clients</button>
+    <button class="nav-btn" data-section="calling">Calling Audit</button>
+    <button class="nav-btn" data-section="signrate">Sign Rate</button>
+    <button class="nav-btn" data-section="quality">Data Quality</button>
+  </nav>
+  <div class="nav-label rtq">Returns · RTQ</div>
+  <nav id="navRTQ">
+    <button class="nav-btn rtq" data-section="rtqDashboard">Overview</button>
+    <button class="nav-btn rtq" data-section="rtqStatus">Status Deep Dive</button>
+    <button class="nav-btn rtq" data-section="rtqAttempts">OFD Attempts</button>
+    <button class="nav-btn rtq" data-section="rtqNotOfd">Not yet OFD</button>
+    <button class="nav-btn rtq" data-section="rtqTiming">Timing & Aging</button>
+    <button class="nav-btn rtq" data-section="rtqGeo">Geography</button>
+    <button class="nav-btn rtq" data-section="rtqDrivers">Drivers</button>
+    <button class="nav-btn rtq" data-section="rtqWeight">Weight & Volume</button>
+    <button class="nav-btn rtq" data-section="rtqExceptions">Exceptions</button>
+    <button class="nav-btn rtq" data-section="rtqClients">Clients & Shippers</button>
+    <button class="nav-btn rtq" data-section="rtqHubs">Hub Analysis</button>
+    <button class="nav-btn rtq" data-section="rtqTable">Full Table</button>
+  </nav>
+  <div class="side-status"><div class="status-head"><strong>Datasets</strong><span class="dot"></span></div><div id="sideDataset">Waiting for data</div></div>
+</aside>
+<main class="main">
+<header class="topbar">
+  <div style="min-width:0;flex:1"><h1 id="reportTitle">Operational Hub Report</h1><p class="mono" id="reportMeta">NO DATASET LOADED</p></div>
+  <div class="toolbar">
+    <button class="btn" id="newBtn"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg><span>New</span></button>
+    <button class="btn icon-only" id="themeBtn2"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+  </div>
+</header>
+<div class="tabbar" id="tabbar"></div>
+<div class="content">
+
+<!-- OFD SECTIONS (kept simple) -->
+<section id="dashboard" class="section active">
+  <div class="subhead"><div><h2>Daily performance overview</h2><p id="summaryLine">Import an OFD dataset to begin.</p></div>
+    <div class="subhead-actions">
+      <button class="btn sm violet" data-capture="dashboard">📸 Screenshot</button>
+      <button class="btn sm green" data-export-sec="dashboard">⬇ Excel</button>
+    </div>
+  </div>
+  <div class="filter-bar">
+    <div class="ms" data-ms="ofdHub"></div>
+    <select id="cityFilter" class="control"><option value="">All cities</option></select>
+    <select id="resultFilter" class="control"><option value="">All results</option><option value="sign">Delivered</option><option value="fail">Failed</option></select>
+    <select id="paymentFilter" class="control"><option value="">All payments</option><option value="COD">COD</option><option value="PPD">Pre-paid</option></select>
+    <button class="btn" id="clearFilters">Reset</button>
+    <div class="spacer"></div>
+    <span class="filter-summary">Showing <b id="ofdFilteredCount">0</b></span>
+  </div>
+  <div id="kpis" class="kpis"></div>
+  <div class="layout">
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title"><h3 id="rankingTitle">Driver ranking</h3><span class="badge" id="rankingCount">0</span></div>
+        <div style="display:flex;gap:8px;align-items:center"><div style="display:flex;gap:3px;background:var(--bg);padding:3px;border-radius:var(--r-sm)"><button class="tab active" data-view="driver" style="border:0;background:transparent;color:var(--muted);padding:6px 9px;border-radius:var(--r-sm);font-size:9px;font-weight:700;text-transform:uppercase">Drivers</button><button class="tab" data-view="client" style="border:0;background:transparent;color:var(--muted);padding:6px 9px;border-radius:var(--r-sm);font-size:9px;font-weight:700;text-transform:uppercase">Clients</button></div>
+        <input id="searchInput" class="search" placeholder="Search…" style="width:170px"></div>
+      </div>
+      <div class="table-scroll"><table><thead id="rankHead"></thead><tbody id="rankBody"></tbody></table></div>
+      <div id="pagination" class="pagination"></div>
+    </div>
+    <div style="display:grid;gap:14px">
+      <div class="panel"><div class="panel-head"><div class="panel-title"><h3 id="chartTitle">Top driver rate</h3></div></div><div class="chart-pad"><div class="chart-wrap"><canvas id="mainChart"></canvas></div></div></div>
+    </div>
+  </div>
+</section>
+<section id="failures" class="section"><div class="subhead"><div><h2>Failure analysis</h2></div><div class="subhead-actions"><button class="btn sm violet" data-capture="failures">📸 Screenshot</button><button class="btn sm green" data-export-sec="failures">⬇ Excel</button></div></div><div class="panel"><div class="table-scroll"><table><thead><tr><th>Rank</th><th class="left">Reason</th><th>Shipments</th><th>Share</th></tr></thead><tbody id="failureBody"></tbody></table></div></div></section>
+<section id="attempts" class="section"><div class="subhead"><div><h2>OFD attempts</h2></div><div class="subhead-actions"><button class="btn sm violet" data-capture="attempts">📸 Screenshot</button><button class="btn sm green" data-export-sec="attempts">⬇ Excel</button></div></div><div id="attemptGrid" class="section-grid"></div></section>
+<section id="cod" class="section"><div class="subhead"><div><h2>COD & payment</h2></div><div class="subhead-actions"><button class="btn sm violet" data-capture="cod">📸 Screenshot</button><button class="btn sm green" data-export-sec="cod">⬇ Excel</button></div></div><div id="codGrid" class="section-grid"></div></section>
+<section id="priority" class="section"><div class="subhead"><div><h2>Priority clients</h2></div><div class="subhead-actions"><button class="btn sm violet" data-capture="priority">📸 Screenshot</button><button class="btn sm green" data-export-sec="priority">⬇ Excel</button></div></div><div id="priorityGrid" class="section-grid"></div></section>
+<section id="calling" class="section"><div class="subhead"><div><h2>Calling audit</h2></div><div class="subhead-actions"><button class="btn sm violet" data-capture="calling">📸 Screenshot</button><button class="btn sm green" data-export-sec="calling">⬇ Excel</button></div></div><div class="panel"><div class="table-scroll"><table><thead><tr><th>Rank</th><th class="left">Driver</th><th class="left">Tracking</th><th>Calls</th></tr></thead><tbody id="callingBody"></tbody></table></div></div></section>
+<section id="signrate" class="section"><div class="subhead"><div><h2>Sign-rate performance</h2></div><div class="subhead-actions"><button class="btn sm violet" data-capture="signrate">📸 Screenshot</button><button class="btn sm green" data-export-sec="signrate">⬇ Excel</button></div></div><div id="signSummary" class="kpis"></div><div class="panel"><div class="table-scroll"><table><thead><tr><th>Rank</th><th class="left">Driver</th><th>Total</th><th>Signed</th><th>Failed</th><th>Rate</th></tr></thead><tbody id="signBody"></tbody></table></div></div></section>
+<section id="quality" class="section"><div class="subhead"><div><h2>Data quality</h2></div><div class="subhead-actions"><button class="btn sm violet" data-capture="quality">📸 Screenshot</button><button class="btn sm green" data-export-sec="quality">⬇ Excel</button></div></div><div id="qualityGrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px"></div></section>
+
+<!-- RTQ SECTIONS -->
+<section id="rtqDashboard" class="section">
+  <div class="subhead">
+    <div><div class="eyebrow" style="color:var(--violet)">Returns · RTQ Analytics</div><h2 id="rtqTitle">Returns Overview</h2><p id="rtqSub">Upload an RTQ file to begin.</p></div>
+    <div class="subhead-actions"><button class="btn sm violet" data-capture="rtqDashboard">📸 Screenshot</button><button class="btn sm green" data-export-sec="rtqDashboard">⬇ Excel</button></div>
+  </div>
+
+  <div class="filter-bar" id="rtqFilterBar">
+    <span class="filter-label">Filters</span>
+    <div class="ms" data-ms="rtqCurHub"></div>
+    <div class="ms" data-ms="rtqStatus"></div>
+    <div class="dr" id="rtqDateRange"></div>
+    <input id="rtqSearch" class="search" placeholder="Search tracking / package / driver / city…" style="width:240px">
+    <button class="btn" id="rtqReset">Reset</button>
+    <button class="filter-toggle" id="rtqAdvBtn">▾ More filters</button>
+    <div class="spacer"></div>
+    <span class="filter-summary">Showing <b id="rtqFilteredCount">0</b> of <b id="rtqTotalCount">0</b></span>
+
+    <div class="filter-advanced" id="rtqAdv">
+      <div class="ms" data-ms="rtqFromHub"></div>
+      <div class="ms" data-ms="rtqFinalHub"></div>
+      <div class="ms" data-ms="rtqAttempt"></div>
+      <div class="ms" data-ms="rtqPkgExc"></div>
+      <div class="ms" data-ms="rtqDelExc"></div>
+      <div class="ms" data-ms="rtqCustomer"></div>
+      <div class="ms" data-ms="rtqShipper"></div>
+      <div class="ms" data-ms="rtqState"></div>
+      <div class="ms" data-ms="rtqCity"></div>
+      <div class="ms" data-ms="rtqDistrict"></div>
+      <div class="ms" data-ms="rtqDriver"></div>
+      <div class="ms" data-ms="rtqPayType"></div>
+      <div class="ms" data-ms="rtqBizType"></div>
+      <div class="dr" id="rtqCollectRange"></div>
+      <div class="weight-filter" id="rtqWeightFilter">
+        <select id="rtqWeightMode">
+          <option value="">Weight</option>
+          <option value="lt">Less than</option>
+          <option value="gt">Greater than</option>
+          <option value="between">Between</option>
+        </select>
+        <input type="number" id="rtqWeightVal1" placeholder="—" step="0.1">
+        <input type="number" id="rtqWeightVal2" placeholder="—" step="0.1" style="display:none">
+        <span class="wf-unit">kg</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="rtqKpis" class="kpis"></div>
+  <div class="layout">
+    <div class="panel"><div class="panel-head"><div class="panel-title"><h3>Status breakdown</h3></div></div><div class="chart-pad"><div class="chart-wrap"><canvas id="rtqStatusChart"></canvas></div></div></div>
+    <div class="panel"><div class="panel-head"><div class="panel-title"><h3>By OFD attempt</h3></div></div><div class="chart-pad"><div class="chart-wrap"><canvas id="rtqAttemptChart"></canvas></div></div></div>
+  </div>
+  <div class="layout">
+    <div class="panel"><div class="panel-head"><div class="panel-title"><h3>Volume over time</h3><span class="badge violet">BY CREATE DATE</span></div></div><div class="chart-pad"><div class="chart-wrap"><canvas id="rtqTimelineChart"></canvas></div></div></div>
+    <div class="panel"><div class="panel-head"><div class="panel-title"><h3>Top exceptions</h3></div></div><div class="chart-pad"><div class="chart-wrap"><canvas id="rtqExceptionChart"></canvas></div></div></div>
+  </div>
+</section>
+
+<section id="rtqStatus" class="section">
+  <div class="subhead"><div><h2>Status deep dive</h2><p>Every status with signature rates, timestamps and location.</p></div>
+    <div class="subhead-actions"><button class="btn sm violet" data-capture="rtqStatus">📸 Screenshot</button><button class="btn sm green" data-export-sec="rtqStatus">⬇ Excel</button></div>
+  </div>
+  <div id="rtqStatusGrid" class="section-grid"></div>
+  <div class="panel" style="margin-top:14px"><div class="panel-head"><div class="panel-title"><h3>Status × payment matrix</h3></div></div>
+    <div class="table-scroll"><table><thead id="rtqStatusTableHead"></thead><tbody id="rtqStatusTableBody"></tbody></table></div>
+  </div>
+</section>
+
+<section id="rtqAttempts" class="section">
+  <div class="subhead"><div><h2>OFD attempt analysis</h2><p>Delivery funnel by attempt count — click any card to drill down.</p></div>
+    <div class="subhead-actions"><button class="btn sm violet" data-capture="rtqAttempts">📸 Screenshot</button><button class="btn sm green" data-export-sec="rtqAttempts">⬇ Excel</button></div>
+  </div>
+  <div id="rtqAttemptGrid" class="section-grid"></div>
+  <div class="panel" style="margin-top:14px"><div class="panel-head"><div class="panel-title"><h3>Attempt outcome matrix</h3></div></div>
+    <div class="table-scroll"><table><thead id="rtqAttemptTableHead"></thead><tbody id="rtqAttemptTableBody"></tbody></table></div>
+  </div>
+</section>
+
+<section id="rtqNotOfd" class="section">
+  <div class="subhead"><div><h2>Not yet OFD</h2><p>Shipments that have not been dispatched for delivery — the outstanding backlog.</p></div>
+    <div class="subhead-actions"><button class="btn sm violet" data-capture="rtqNotOfd">📸 Screenshot</button><button class="btn sm green" data-export-sec="rtqNotOfd">⬇ Excel</button></div>
+  </div>
+  <div id="rtqNotOfdKpis" class="kpis" style="grid-template-columns:repeat(4,1fr)"></div>
+  <div class="panel"><div class="panel-head"><div class="panel-title"><h3>Not yet OFD shipments</h3><span class="badge violet" id="rtqNotOfdCount">0</span></div></div>
+    <div class="table-scroll"><table><thead id="rtqNotOfdHead"></thead><tbody id="rtqNotOfdBody"></tbody></table></div>
+    <div id="rtqNotOfdPgn" class="pagination"></div>
+  </div>
+</section>
+
+<section id="rtqTiming" class="section">
+  <div class="subhead"><div><h2>Timing & aging</h2><p>Cycle times across the whole operation.</p></div>
+    <div class="subhead-actions"><button class="btn sm violet" data-capture="rtqTiming">📸 Screenshot</button><button class="btn sm green" data-export-sec="rtqTiming">⬇ Excel</button></div>
+  </div>
+  <div id="rtqTimingKpis" class="kpis"></div>
+  <div class="layout">
+    <div class="panel"><div class="panel-head"><div class="panel-title"><h3>Stage durations (avg hours)</h3></div></div><div class="chart-pad"><div class="chart-wrap"><canvas id="rtqStageChart"></canvas></div></div></div>
+    <div class="panel"><div class="panel-head"><div class="panel-title"><h3>Aging buckets</h3></div></div><div class="chart-pad"><div class="chart-wrap"><canvas id="rtqAgingChart"></canvas></div></div></div>
+  </div>
+  <div class="panel"><div class="panel-head"><div class="panel-title"><h3>Aging analysis table</h3></div></div>
+    <div class="table-scroll"><table><thead id="rtqAgingTableHead"></thead><tbody id="rtqAgingTableBody"></tbody></table></div>
+  </div>
+</section>
+
+<section id="rtqGeo" class="section">
+  <div class="subhead"><div><h2>Geography</h2><p>Returns by state, city and district.</p></div>
+    <div class="subhead-actions"><button class="btn sm violet" data-capture="rtqGeo">📸 Screenshot</button><button class="btn sm green" data-export-sec="rtqGeo">⬇ Excel</button></div>
+  </div>
+  <div class="layout">
+    <div class="panel"><div class="panel-head"><div class="panel-title"><h3>Top cities</h3></div></div><div class="chart-pad"><div class="chart-wrap"><canvas id="rtqCityChart"></canvas></div></div></div>
+    <div class="panel"><div class="panel-head"><div class="panel-title"><h3>Top districts</h3></div></div><div class="chart-pad"><div class="chart-wrap"><canvas id="rtqDistrictChart"></canvas></div></div></div>
+  </div>
+  <div class="panel"><div class="panel-head"><div class="panel-title"><h3>Full geographic breakdown</h3></div></div>
+    <div class="table-scroll"><table><thead id="rtqGeoTableHead"></thead><tbody id="rtqGeoTableBody"></tbody></table></div>
+  </div>
+</section>
+
+<section id="rtqDrivers" class="section">
+  <div class="subhead"><div><h2>Drivers</h2><p>Driver-level return volumes and outcomes.</p></div>
+    <div class="subhead-actions"><button class="btn sm violet" data-capture="rtqDrivers">📸 Screenshot</button><button class="btn sm green" data-export-sec="rtqDrivers">⬇ Excel</button></div>
+  </div>
+  <div class="panel"><div class="panel-head"><div class="panel-title"><h3>Driver breakdown</h3><span class="badge violet" id="rtqDriverCount">0</span></div></div>
+    <div class="table-scroll"><table><thead id="rtqDriverTableHead"></thead><tbody id="rtqDriverTableBody"></tbody></table></div>
+    <div id="rtqDriverPgn" class="pagination"></div>
+  </div>
+</section>
+
+<section id="rtqWeight" class="section">
+  <div class="subhead"><div><h2>Weight & Volume</h2><p>Package weight distribution and volumetric analysis.</p></div>
+    <div class="subhead-actions"><button class="btn sm violet" data-capture="rtqWeight">📸 Screenshot</button><button class="btn sm green" data-export-sec="rtqWeight">⬇ Excel</button></div>
+  </div>
+  <div id="rtqWeightKpis" class="kpis" style="grid-template-columns:repeat(4,1fr)"></div>
+  <div class="layout">
+    <div class="panel"><div class="panel-head"><div class="panel-title"><h3>Weight distribution</h3></div></div><div class="chart-pad"><div class="chart-wrap"><canvas id="rtqWeightChart"></canvas></div></div></div>
+    <div class="panel"><div class="panel-head"><div class="panel-title"><h3>Weight by customer</h3></div></div><div class="chart-pad"><div class="chart-wrap"><canvas id="rtqWeightClientChart"></canvas></div></div></div>
+  </div>
+  <div class="panel"><div class="panel-head"><div class="panel-title"><h3>Weight detail</h3></div></div>
+    <div class="table-scroll"><table><thead id="rtqWeightTableHead"></thead><tbody id="rtqWeightTableBody"></tbody></table></div>
+  </div>
+</section>
+
+<section id="rtqExceptions" class="section">
+  <div class="subhead"><div><h2>Exceptions</h2><p>Package and delivery exception breakdowns.</p></div>
+    <div class="subhead-actions"><button class="btn sm violet" data-capture="rtqExceptions">📸 Screenshot</button><button class="btn sm green" data-export-sec="rtqExceptions">⬇ Excel</button></div>
+  </div>
+  <div class="layout">
+    <div class="panel"><div class="panel-head"><div class="panel-title"><h3>Package exceptions</h3></div></div><div class="table-scroll" style="max-height:400px"><table><thead><tr><th>#</th><th class="left">Exception</th><th>Count</th><th>Share</th></tr></thead><tbody id="rtqPkgExcBody"></tbody></table></div></div>
+    <div class="panel"><div class="panel-head"><div class="panel-title"><h3>Delivery exceptions</h3></div></div><div class="table-scroll" style="max-height:400px"><table><thead><tr><th>#</th><th class="left">Exception</th><th>Count</th><th>Share</th></tr></thead><tbody id="rtqDelExcBody"></tbody></table></div></div>
+  </div>
+</section>
+
+<section id="rtqClients" class="section">
+  <div class="subhead"><div><h2>Clients & Shippers</h2><p>Volume and outcomes by customer and shipper.</p></div>
+    <div class="subhead-actions"><button class="btn sm violet" data-capture="rtqClients">📸 Screenshot</button><button class="btn sm green" data-export-sec="rtqClients">⬇ Excel</button></div>
+  </div>
+  <div class="layout">
+    <div class="panel"><div class="panel-head"><div class="panel-title"><h3>By customer</h3></div></div><div class="table-scroll"><table><thead id="rtqCustomerTableHead"></thead><tbody id="rtqCustomerTableBody"></tbody></table></div></div>
+    <div class="panel"><div class="panel-head"><div class="panel-title"><h3>Top shippers</h3></div></div><div class="table-scroll"><table><thead id="rtqShipperTableHead"></thead><tbody id="rtqShipperTableBody"></tbody></table></div></div>
+  </div>
+</section>
+
+<section id="rtqHubs" class="section">
+  <div class="subhead"><div><h2>Hub analysis</h2><p>From / Current / Final hub breakdown.</p></div>
+    <div class="subhead-actions"><button class="btn sm violet" data-capture="rtqHubs">📸 Screenshot</button><button class="btn sm green" data-export-sec="rtqHubs">⬇ Excel</button></div>
+  </div>
+  <div class="layout">
+    <div class="panel"><div class="panel-head"><div class="panel-title"><h3>Current Hub</h3></div></div><div class="table-scroll"><table><thead><tr><th>#</th><th class="left">Hub</th><th>Returns</th><th>Share</th></tr></thead><tbody id="rtqCurHubBody"></tbody></table></div></div>
+    <div class="panel"><div class="panel-head"><div class="panel-title"><h3>From Hub</h3></div></div><div class="table-scroll"><table><thead><tr><th>#</th><th class="left">Hub</th><th>Returns</th><th>Share</th></tr></thead><tbody id="rtqFromHubBody"></tbody></table></div></div>
+  </div>
+  <div class="panel" style="margin-top:14px"><div class="panel-head"><div class="panel-title"><h3>Final Hub destinations</h3></div></div>
+    <div class="table-scroll"><table><thead><tr><th>#</th><th class="left">Hub</th><th>Returns</th><th>Share</th></tr></thead><tbody id="rtqFinalHubBody"></tbody></table></div>
+  </div>
+</section>
+
+<section id="rtqTable" class="section">
+  <div class="subhead"><div><h2>Full Returns Table</h2><p>Every filtered return — click any row for the full record.</p></div>
+    <div class="subhead-actions"><button class="btn sm violet" data-capture="rtqTable">📸 Screenshot</button><button class="btn sm green" data-export-sec="rtqTable">⬇ Excel</button></div>
+  </div>
+  <div class="panel">
+    <div class="table-scroll" style="max-height:620px"><table><thead id="rtqTableHead"></thead><tbody id="rtqTableBody"></tbody></table></div>
+    <div id="rtqPgn" class="pagination"></div>
+  </div>
+</section>
+
+</div></main></section>
+</div>
+
+<div id="modal" class="modal"><div class="modal-box"><div class="modal-head"><div><h3 id="modalTitle">Shipments</h3><p id="modalSub">0 records</p></div><div style="display:flex;gap:8px"><button class="btn" id="copyBtn">Copy tracking</button><button class="btn" id="copyFullBtn">Copy all data</button><button class="modal-x" id="closeModal">×</button></div></div><div class="modal-body" id="modalBody"></div></div></div>
+<div id="toast" class="toast"></div>
+<div id="loading" class="loading"><div class="loader-box"><div class="spinner"></div><strong id="loadingText">Processing…</strong></div></div>
+
+<script>
+'use strict';
+
+/* ═══ ALIASES ═══ */
+const OFD_ALIASES={track:['tracking no','tracking_no'],result:['ofd result','result'],driver:['driver','driver name'],driverNo:['driver no'],shipper:['shipper name','shipper','client'],city:['city'],district:['district'],hub:['hub name','hub_name'],fail:['fail reason','fail_reason'],payType:['payment type','payment_type'],calls:['call times','call_times'],ofdNum:['ofd num','ofd_num'],cash:['payment-cash'],pos:['payment-pos'],ofdDate:['ofd date','ofd_date']};
+
+const RTQ_ALIASES={
+  track:['tracking no','tracking_no'],packageId:['package id'],packageNo:['package no'],
+  fromHub:['from hub'],currentHub:['current hub'],finalHub:['final hub'],
+  create:['create'],collect:['collect'],load:['load'],sign:['sign'],
+  status:['package status','status'],
+  pkgException:['package exception'],pkgExceptionTime:['package exception time'],
+  deliveryException:['delivery exception'],deliveryExceptionTime:['delivery exception time'],
+  customer:['customer'],shipper:['shipper name'],
+  recipient:['recipient name'],country:['recipient country'],state:['recipient state'],
+  city:['recipient city'],district:['recipient district'],street:['recipient street address'],
+  phone:['recipient cellphone'],zipCode:['recipient zipcode'],
+  cod:['cod'],declare:['declare'],customs:['customs charge'],
+  weight:['weight（g）','weight(g)','weight'],appointment:['appointment date'],
+  ofdTimes:['ofd times'],driver:['driver name'],driverAccount:['driver account'],
+  rtoLoadTime:['rto load time'],location:['location'],
+  payType:['payment type'],bizType:['biz type'],
+  latestTrack:['latest track time'],launchRto:['launch rto time'],
+  lastClientScan:['last client scan time'],lastClientScanHub:['last client scan hub'],
+  addressKey:['unique address key'],volume:['volume (cbm)','volume']
+};
+
+/* ═══ STATE ═══ */
+let ofdData=[],rtqData=[];
+let rawOFDRows=[],rawRTQRows=[]; /* keep original untouched for export sheet 2 */
+let srcFilesOFD=[],srcFilesRTQ=[];
+let detectedHub='GFS AlRass Hub';
+let view='driver',pageNo=1,target=80,chart=null,currentSection='dashboard';
+let modalRows=[];
+let openTabs=[],activeTab=null;
+let ofdF={hubs:new Set(),city:'',result:'',payment:''};
+let rtqF={curHubs:new Set(),fromHubs:new Set(),finalHubs:new Set(),statuses:new Set(),pkgExcs:new Set(),delExcs:new Set(),attempts:new Set(),customers:new Set(),shippers:new Set(),states:new Set(),cities:new Set(),districts:new Set(),drivers:new Set(),payTypes:new Set(),bizTypes:new Set(),
+  createFrom:'',createTo:'',collectFrom:'',collectTo:'',
+  weightMode:'',weightVal1:'',weightVal2:'',
+  search:''};
+let rtqPage=1,rtqNotOfdPage=1,rtqDriverPage=1;
+const RTQ_CHARTS={};
+const SORT={}; /* {section: {key, dir}} */
+
+/* ═══ LOGO ═══ */
+let logoSvgId=0;
+function gfsLogoSVG(){const id='gc'+(++logoSvgId),gid='gb'+(logoSvgId);return `<svg viewBox="0 0 340 180" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"><defs><linearGradient id="${gid}" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#2a89f0"/><stop offset="55%" stop-color="#1667c4"/><stop offset="100%" stop-color="#0a3a6f"/></linearGradient><clipPath id="${id}"><text x="278" y="132" font-family="Arial Black" font-size="128" font-weight="900" font-style="italic" text-anchor="middle">S</text></clipPath></defs><rect width="340" height="180" fill="url(#${gid})"/><g font-family="Arial Black" font-size="128" font-weight="900" font-style="italic" fill="#ffffff" text-anchor="middle"><text x="72" y="132">G</text><text x="175" y="132">F</text><text x="278" y="132">S</text></g><g clip-path="url(#${id})"><polygon points="236,92 400,92 400,-40 296,-40" fill="#E31E24"/></g></svg>`;}
+
+/* ═══ HELPERS ═══ */
+const $=id=>document.getElementById(id);
+const $$=s=>document.querySelectorAll(s);
+const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove('show'),3500)}
+function loading(on,text){$('loading').classList.toggle('show',on);if(text)$('loadingText').textContent=text}
+function val(row,keys){const map={};Object.keys(row).forEach(k=>map[String(k).trim().toLowerCase().replace(/^\ufeff/,'')]=row[k]);for(const k of keys)if(Object.prototype.hasOwnProperty.call(map,k))return map[k];return ''}
+const num=v=>{const n=Number(String(v??'').replace(/,/g,''));return Number.isFinite(n)?n:0};
+const numLoose=v=>{const s=String(v??'').replace(/[^\d.\-]/g,'');const n=parseFloat(s);return Number.isFinite(n)?n:0};
+function toYMD(v){if(!v)return'';const s=String(v).trim();if(!s)return'';let m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)return m[1]+'-'+m[2]+'-'+m[3];m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);if(m){let a=+m[1],b=+m[2],y=+m[3];if(a>12)return `${y}-${String(b).padStart(2,'0')}-${String(a).padStart(2,'0')}`;return `${y}-${String(a).padStart(2,'0')}-${String(b).padStart(2,'0')}`;}const d=new Date(s);return isNaN(d)?'':d.toISOString().slice(0,10);}
+function dateOnly(v){return v?v.slice(0,10):''}
+
+/* ═══ NORMALIZERS ═══ */
+function normalizeOFD(r,source){return{track:String(val(r,OFD_ALIASES.track)||'').trim(),result:String(val(r,OFD_ALIASES.result)||'').trim().toLowerCase(),driver:String(val(r,OFD_ALIASES.driver)||'Unknown').trim()||'Unknown',driverNo:String(val(r,OFD_ALIASES.driverNo)||'').trim(),shipper:String(val(r,OFD_ALIASES.shipper)||'Unknown').trim()||'Unknown',city:String(val(r,OFD_ALIASES.city)||'Unknown').trim()||'Unknown',district:String(val(r,OFD_ALIASES.district)||'').trim(),hub:String(val(r,OFD_ALIASES.hub)||'').trim(),fail:String(val(r,OFD_ALIASES.fail)||'').trim(),payType:String(val(r,OFD_ALIASES.payType)||'PPD').trim().toUpperCase(),calls:num(val(r,OFD_ALIASES.calls)),ofdNum:Math.max(1,parseInt(val(r,OFD_ALIASES.ofdNum))||1),cash:num(val(r,OFD_ALIASES.cash)),pos:num(val(r,OFD_ALIASES.pos)),ofdDate:toYMD(val(r,OFD_ALIASES.ofdDate)),source};}
+
+function normalizeRTQ(r,source){
+  const ofdRaw=val(r,RTQ_ALIASES.ofdTimes);
+  return {
+    track:String(val(r,RTQ_ALIASES.track)||'').trim(),
+    packageId:String(val(r,RTQ_ALIASES.packageId)||'').trim(),
+    packageNo:String(val(r,RTQ_ALIASES.packageNo)||'').trim(),
+    fromHub:String(val(r,RTQ_ALIASES.fromHub)||'').trim()||'(No hub)',
+    currentHub:String(val(r,RTQ_ALIASES.currentHub)||'').trim()||'(No hub)',
+    finalHub:String(val(r,RTQ_ALIASES.finalHub)||'').trim()||'(No hub)',
+    create:toYMD(val(r,RTQ_ALIASES.create)),
+    collect:toYMD(val(r,RTQ_ALIASES.collect)),
+    load:toYMD(val(r,RTQ_ALIASES.load)),
+    sign:toYMD(val(r,RTQ_ALIASES.sign)),
+    status:String(val(r,RTQ_ALIASES.status)||'').trim().toUpperCase()||'UNKNOWN',
+    pkgException:String(val(r,RTQ_ALIASES.pkgException)||'').trim(),
+    deliveryException:String(val(r,RTQ_ALIASES.deliveryException)||'').trim(),
+    customer:String(val(r,RTQ_ALIASES.customer)||'').trim()||'Unknown',
+    shipper:String(val(r,RTQ_ALIASES.shipper)||'').trim()||'Unknown',
+    recipient:String(val(r,RTQ_ALIASES.recipient)||'').trim(),
+    country:String(val(r,RTQ_ALIASES.country)||'').trim(),
+    state:String(val(r,RTQ_ALIASES.state)||'').trim()||'Unknown',
+    city:String(val(r,RTQ_ALIASES.city)||'').trim()||'Unknown',
+    district:String(val(r,RTQ_ALIASES.district)||'').trim()||'Unknown',
+    phone:String(val(r,RTQ_ALIASES.phone)||'').trim(),
+    cod:numLoose(val(r,RTQ_ALIASES.cod)),
+    declare:numLoose(val(r,RTQ_ALIASES.declare)),
+    customs:numLoose(val(r,RTQ_ALIASES.customs)),
+    weight:numLoose(val(r,RTQ_ALIASES.weight)),
+    appointment:toYMD(val(r,RTQ_ALIASES.appointment)),
+    ofdTimes:ofdRaw===''||ofdRaw==null?0:(parseInt(ofdRaw)||0),
+    driver:String(val(r,RTQ_ALIASES.driver)||'').trim()||'Unknown',
+    driverAccount:String(val(r,RTQ_ALIASES.driverAccount)||'').trim(),
+    rtoLoadTime:toYMD(val(r,RTQ_ALIASES.rtoLoadTime)),
+    location:String(val(r,RTQ_ALIASES.location)||'').trim(),
+    payType:String(val(r,RTQ_ALIASES.payType)||'').trim().toUpperCase()||'—',
+    bizType:String(val(r,RTQ_ALIASES.bizType)||'').trim().toUpperCase()||'—',
+    volume:numLoose(val(r,RTQ_ALIASES.volume)),
+    source
+  };
+}
+
+/* ═══ FILE PARSING ═══ */
+async function parseWorkbook(buffer){const wb=XLSX.read(buffer,{type:'array',cellDates:false});let rows=[];wb.SheetNames.forEach(sheet=>{const part=XLSX.utils.sheet_to_json(wb.Sheets[sheet],{defval:''});rows.push(...part.map(r=>({...r,__sheet:sheet})))});return rows}
+async function parseFile(file,srcArr,loader){const lower=file.name.toLowerCase();
+  if(lower.endsWith('.zip')){const zip=await JSZip.loadAsync(file);const entries=Object.values(zip.files).filter(f=>!f.dir&&/\.(xlsx|xls|csv)$/i.test(f.name)&&!f.name.startsWith('__MACOSX'));if(!entries.length)throw new Error('ZIP contains no spreadsheet files.');let all=[];for(let i=0;i<entries.length;i++){loader&&loader(true,`Reading ${i+1} of ${entries.length}: ${entries[i].name}`);const buf=await entries[i].async('arraybuffer');const rows=await parseWorkbook(buf);all.push(...rows.map(r=>({...r,__source:entries[i].name})));srcArr.push(entries[i].name)}return all}
+  srcArr.push(file.name);const buf=await file.arrayBuffer();return (await parseWorkbook(buf)).map(r=>({...r,__source:file.name}));
+}
+
+function detectHubOFD(rows){const c={};rows.forEach(r=>{if(r.hub)c[r.hub]=(c[r.hub]||0)+1});const s=Object.entries(c).sort((a,b)=>b[1]-a[1]);return s[0]?s[0][0]:'';}
+function detectHubRTQ(rows){const c={};rows.forEach(r=>{if(r.currentHub&&r.currentHub!=='(No hub)')c[r.currentHub]=(c[r.currentHub]||0)+1});const s=Object.entries(c).sort((a,b)=>b[1]-a[1]);return s[0]?s[0][0]:'';}
+
+async function importOFD(files){
+  if(!files.length)return;loading(true,'Reading OFD file…');
+  try{
+    let rows=[];for(const f of files)rows.push(...await parseFile(f,srcFilesOFD,loading));
+    rawOFDRows=rows.slice(); /* preserve untouched */
+    const normalized=rows.map(r=>normalizeOFD(r,r.__source||'Imported')).filter(r=>r.track.length>4);
+    if(!normalized.length)throw new Error('No valid OFD records found.');
+    const seen=new Set();
+    ofdData=normalized.filter(r=>{if(seen.has(r.track))return false;seen.add(r.track);return true});
+    const h=detectHubOFD(ofdData);if(h)detectedHub=h;
+    $('uploadScreen').classList.add('hidden');$('reportScreen').classList.remove('hidden');
+    setupOFDFilters();renderAll();
+    if(!openTabs.length||!openTabs.some(t=>!t.startsWith('rtq')))openTab('dashboard');
+    toast(`OFD: ${ofdData.length.toLocaleString()} shipments loaded`);
+  }catch(e){toast('OFD import failed: '+e.message);console.error(e)}
+  finally{loading(false)}
+}
+
+async function importRTQ(files){
+  if(!files.length)return;loading(true,'Reading RTQ file…');
+  try{
+    let rows=[];for(const f of files)rows.push(...await parseFile(f,srcFilesRTQ,loading));
+    rawRTQRows=rows.slice(); /* preserve untouched */
+    const normalized=rows.filter(r=>String(val(r,RTQ_ALIASES.track)||'').trim().length>4).map(r=>normalizeRTQ(r,r.__source||'Imported'));
+    if(!normalized.length)throw new Error('No valid RTQ records found. Check "Tracking No" column exists.');
+    /* dedupe by track + packageId */
+    const seen=new Set();
+    rtqData=normalized.filter(r=>{const k=r.track+'|'+r.packageId;if(seen.has(k))return false;seen.add(k);return true});
+    const h=detectHubRTQ(rtqData);if(h)detectedHub=h;
+    $('uploadScreen').classList.add('hidden');$('reportScreen').classList.remove('hidden');
+    setupRTQFilters();renderAll();
+    if(!openTabs.some(t=>t.startsWith('rtq')))openTab('rtqDashboard');
+    toast(`RTQ: ${rtqData.length.toLocaleString()} returns loaded`);
+  }catch(e){toast('RTQ import failed: '+e.message);console.error(e)}
+  finally{loading(false)}
+}
+
+/* ═══ MULTI-SELECT (z-index fixed) ═══ */
+function buildMultiSelect(el,label,options,selected,counts,onChange,violet){
+  el.classList.toggle('rtq',!!violet);
+  el.innerHTML=`<button class="ms-btn"><span class="ms-lbl">${esc(label)}</span><span class="ms-val">All</span></button><div class="ms-drop"><input class="ms-search" placeholder="Search…"><div class="ms-head"><button data-act="all">Select all</button><button data-act="none" ${violet?'class="rtq-btn"':''}>Clear</button></div><div class="ms-list"></div></div>`;
+  const listEl=el.querySelector('.ms-list'),valEl=el.querySelector('.ms-val'),btn=el.querySelector('.ms-btn'),searchEl=el.querySelector('.ms-search');
+  let curSearch='';
+  function paint(){
+    let list=curSearch?options.filter(o=>String(o).toLowerCase().includes(curSearch.toLowerCase())):options;
+    if(!list.length){listEl.innerHTML='<div class="ms-empty">No options</div>';return}
+    listEl.innerHTML=list.map(o=>{const cnt=counts[o]||0;const ck=selected.has(o)?'checked':'';return `<label class="ms-item"><input type="checkbox" ${ck} value="${esc(o)}"><span>${esc(o)}</span><span class="ms-count">${cnt}</span></label>`}).join('');
+    listEl.querySelectorAll('input').forEach(i=>i.onchange=()=>{if(i.checked)selected.add(i.value);else selected.delete(i.value);updateVal();onChange()});
+  }
+  function updateVal(){
+    const n=selected.size;
+    if(n===0){valEl.textContent='All';el.classList.remove('has-value')}
+    else if(n===1){const s=[...selected][0];valEl.textContent=s.length>14?s.slice(0,13)+'…':s;el.classList.add('has-value')}
+    else{valEl.textContent=n+' selected';el.classList.add('has-value')}
+  }
+  btn.onclick=e=>{
+    e.stopPropagation();
+    const wasOpen=el.classList.contains('open');
+    document.querySelectorAll('.ms.open,.dr.open').forEach(o=>{if(o!==el)o.classList.remove('open')});
+    document.querySelectorAll('.filter-bar.ms-active').forEach(f=>f.classList.remove('ms-active'));
+    el.classList.toggle('open',!wasOpen);
+    if(!wasOpen){const bar=el.closest('.filter-bar');if(bar)bar.classList.add('ms-active');setTimeout(()=>searchEl.focus(),50)}
+  };
+  el.querySelector('[data-act="all"]').onclick=e=>{e.stopPropagation();options.forEach(o=>selected.add(o));updateVal();paint();onChange()};
+  el.querySelector('[data-act="none"]').onclick=e=>{e.stopPropagation();selected.clear();updateVal();paint();onChange()};
+  searchEl.oninput=()=>{curSearch=searchEl.value;paint()};
+  document.addEventListener('click',ev=>{if(!el.contains(ev.target)){el.classList.remove('open');const bar=el.closest('.filter-bar');if(bar)bar.classList.remove('ms-active')}});
+  paint();updateVal();
+}
+
+/* ═══ SINGLE DATE RANGE PICKER ═══ */
+function buildDateRange(el,label,state,onChange){
+  el.innerHTML=`<button class="dr-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span class="dr-label">${esc(label)}</span><span class="dr-clear" style="display:none">×</span></button><div class="dr-pop"><div class="dr-presets"><button data-p="today">Today</button><button data-p="yesterday">Yesterday</button><button data-p="7d">Last 7 days</button><button data-p="30d">Last 30 days</button><button data-p="month">This month</button><button data-p="clear">Clear</button></div><div class="dr-inputs"><label>From <input type="date" data-dr="from" value="${state.from||''}"></label><label>To <input type="date" data-dr="to" value="${state.to||''}"></label></div><div class="dr-foot"><span class="dr-status">Any date</span></div></div>`;
+  const btn=el.querySelector('.dr-btn'),pop=el.querySelector('.dr-pop'),lbl=el.querySelector('.dr-label'),clr=el.querySelector('.dr-clear'),status=el.querySelector('.dr-status');
+  const fromI=el.querySelector('[data-dr="from"]'),toI=el.querySelector('[data-dr="to"]');
+  function updateLabel(){
+    const f=state.from,t=state.to;
+    if(!f&&!t){lbl.textContent=label;clr.style.display='none';status.textContent='Any date'}
+    else if(f&&t&&f===t){lbl.textContent=f;clr.style.display='flex';status.textContent=f}
+    else if(f&&t){lbl.textContent=f+' → '+t;clr.style.display='flex';status.textContent=f+' → '+t}
+    else if(f){lbl.textContent='From '+f;clr.style.display='flex';status.textContent='From '+f}
+    else{lbl.textContent='Until '+t;clr.style.display='flex';status.textContent='Until '+t}
+  }
+  function apply(){state.from=fromI.value;state.to=toI.value;updateLabel();onChange()}
+  function preset(p){
+    const today=new Date();const ymd=d=>d.toISOString().slice(0,10);
+    if(p==='clear'){state.from='';state.to='';fromI.value='';toI.value=''}
+    else if(p==='today'){state.from=ymd(today);state.to=ymd(today);fromI.value=state.from;toI.value=state.to}
+    else if(p==='yesterday'){const y=new Date(today);y.setDate(y.getDate()-1);state.from=ymd(y);state.to=ymd(y);fromI.value=state.from;toI.value=state.to}
+    else if(p==='7d'){const s=new Date(today);s.setDate(s.getDate()-7);state.from=ymd(s);state.to=ymd(today);fromI.value=state.from;toI.value=state.to}
+    else if(p==='30d'){const s=new Date(today);s.setDate(s.getDate()-30);state.from=ymd(s);state.to=ymd(today);fromI.value=state.from;toI.value=state.to}
+    else if(p==='month'){const s=new Date(today.getFullYear(),today.getMonth(),1);state.from=ymd(s);state.to=ymd(today);fromI.value=state.from;toI.value=state.to}
+    updateLabel();onChange();
+  }
+  btn.onclick=e=>{e.stopPropagation();const wasOpen=el.classList.contains('open');document.querySelectorAll('.ms.open,.dr.open').forEach(o=>{if(o!==el)o.classList.remove('open')});el.classList.toggle('open',!wasOpen)};
+  clr.onclick=e=>{e.stopPropagation();preset('clear')};
+  el.querySelectorAll('[data-p]').forEach(b=>b.onclick=e=>{e.stopPropagation();preset(b.dataset.p)});
+  fromI.onchange=apply;toI.onchange=apply;
+  document.addEventListener('click',ev=>{if(!el.contains(ev.target))el.classList.remove('open')});
+  updateLabel();
+}
+
+/* ═══ WEIGHT FILTER ═══ */
+function buildWeightFilter(){
+  const sel=$('rtqWeightMode'),v1=$('rtqWeightVal1'),v2=$('rtqWeightVal2'),wrap=$('rtqWeightFilter');
+  function sync(){
+    const mode=sel.value;
+    v1.style.display=mode?'':'none';
+    v2.style.display=mode==='between'?'':'none';
+    wrap.classList.toggle('active',!!mode);
+    rtqF.weightMode=mode;
+    rtqF.weightVal1=mode?v1.value:'';
+    rtqF.weightVal2=mode==='between'?v2.value:'';
+    renderRTQAll();
+  }
+  sel.onchange=sync;
+  v1.oninput=()=>{rtqF.weightVal1=v1.value;renderRTQAll()};
+  v2.oninput=()=>{rtqF.weightVal2=v2.value;renderRTQAll()};
+}
+
+/* ═══ SORT HELPERS ═══ */
+function sortData(arr,key,dir){return arr.slice().sort((a,b)=>{let va=a[key],vb=b[key];if(typeof va==='string'&&typeof vb==='string')return va.localeCompare(vb)*dir;return((Number(va)||0)-(Number(vb)||0))*dir})}
+function makeSortable(th,section,key,dir,sortFn){
+  const isThis=SORT[section]&&SORT[section].key===key;
+  th.className=(th.className.replace(/\s*(asc|desc|sortable)\b/g,'')+' sortable '+(isThis?(SORT[section].dir===1?'asc':'desc'):'')).trim();
+  if(!th.querySelector('.sort-icon'))th.insertAdjacentHTML('beforeend','<span class="sort-icon">⇅</span>');
+  th.querySelector('.sort-icon').textContent=isThis?(SORT[section].dir===1?'▲':'▼'):'⇅';
+  th.onclick=()=>{
+    if(!SORT[section]||SORT[section].key!==key)SORT[section]={key,dir:-1};
+    else SORT[section].dir*=-1;
+    sortFn();
+  };
+}
+
+/* ═══ FILTER SETUP ═══ */
+function setupOFDFilters(){
+  const hubs=[...new Set(ofdData.map(r=>r.hub||'(No hub)'))].sort();
+  const hubCounts={};ofdData.forEach(r=>{const h=r.hub||'(No hub)';hubCounts[h]=(hubCounts[h]||0)+1});
+  ofdF.hubs.clear();
+  buildMultiSelect(document.querySelector('[data-ms="ofdHub"]'),'Hub',hubs,ofdF.hubs,hubCounts,()=>{pageNo=1;renderAll()},false);
+  const cities=[...new Set(ofdData.map(r=>r.city))].sort();
+  $('cityFilter').innerHTML='<option value="">All cities</option>'+cities.map(x=>`<option>${esc(x)}</option>`).join('');
+}
+
+function setupRTQFilters(){
+  if(!rtqData.length)return;
+  const col=a=>[...new Set(rtqData.map(r=>r[a]))].filter(x=>x&&x!=='Unknown'&&x!=='—'&&x!=='(No hub)').sort();
+  const cnt=a=>{const m={};rtqData.forEach(r=>{const v=r[a];if(v)m[v]=(m[v]||0)+1});return m};
+  const attemptLabels=[...new Set(rtqData.map(r=>r.ofdTimes))].sort((a,b)=>a-b).map(n=>n===0?'Not yet':'Attempt '+n);
+  const attemptCounts={};rtqData.forEach(r=>{const k=r.ofdTimes===0?'Not yet':'Attempt '+r.ofdTimes;attemptCounts[k]=(attemptCounts[k]||0)+1});
+
+  buildMultiSelect(document.querySelector('[data-ms="rtqCurHub"]'),'Current Hub',col('currentHub'),rtqF.curHubs,cnt('currentHub'),renderRTQAll,true);
+  buildMultiSelect(document.querySelector('[data-ms="rtqFromHub"]'),'From Hub',col('fromHub'),rtqF.fromHubs,cnt('fromHub'),renderRTQAll,true);
+  buildMultiSelect(document.querySelector('[data-ms="rtqFinalHub"]'),'Final Hub',col('finalHub'),rtqF.finalHubs,cnt('finalHub'),renderRTQAll,true);
+  buildMultiSelect(document.querySelector('[data-ms="rtqStatus"]'),'Status',col('status'),rtqF.statuses,cnt('status'),renderRTQAll,true);
+  buildMultiSelect(document.querySelector('[data-ms="rtqAttempt"]'),'OFD attempt',attemptLabels,rtqF.attempts,attemptCounts,renderRTQAll,true);
+  buildMultiSelect(document.querySelector('[data-ms="rtqPkgExc"]'),'Package Exception',col('pkgException'),rtqF.pkgExcs,cnt('pkgException'),renderRTQAll,true);
+  buildMultiSelect(document.querySelector('[data-ms="rtqDelExc"]'),'Delivery Exception',col('deliveryException'),rtqF.delExcs,cnt('deliveryException'),renderRTQAll,true);
+  buildMultiSelect(document.querySelector('[data-ms="rtqCustomer"]'),'Customer',col('customer'),rtqF.customers,cnt('customer'),renderRTQAll,true);
+  buildMultiSelect(document.querySelector('[data-ms="rtqShipper"]'),'Shipper',col('shipper'),rtqF.shippers,cnt('shipper'),renderRTQAll,true);
+  buildMultiSelect(document.querySelector('[data-ms="rtqState"]'),'State',col('state'),rtqF.states,cnt('state'),renderRTQAll,true);
+  buildMultiSelect(document.querySelector('[data-ms="rtqCity"]'),'City',col('city'),rtqF.cities,cnt('city'),renderRTQAll,true);
+  buildMultiSelect(document.querySelector('[data-ms="rtqDistrict"]'),'District',col('district'),rtqF.districts,cnt('district'),renderRTQAll,true);
+  buildMultiSelect(document.querySelector('[data-ms="rtqDriver"]'),'Driver',col('driver'),rtqF.drivers,cnt('driver'),renderRTQAll,true);
+  buildMultiSelect(document.querySelector('[data-ms="rtqPayType"]'),'Payment Type',col('payType'),rtqF.payTypes,cnt('payType'),renderRTQAll,true);
+  buildMultiSelect(document.querySelector('[data-ms="rtqBizType"]'),'Biz Type',col('bizType'),rtqF.bizTypes,cnt('bizType'),renderRTQAll,true);
+
+  /* Single date range pickers */
+  buildDateRange($('rtqDateRange'),'Create date',{from:rtqF.createFrom,to:rtqF.createTo},()=>{rtqF.createFrom=$('rtqDateRange').state?.from||'';renderRTQAll()});
+  const drState=$('rtqDateRange')._state={from:rtqF.createFrom,to:rtqF.createTo};
+  /* simplest: re-bind through the picker state object */
+
+  /* Fix: use the closure state inside buildDateRange */
+  buildDateRange($('rtqDateRange'),'Create date',rtqF.createRange={from:rtqF.createFrom,to:rtqF.createTo},()=>{rtqF.createFrom=rtqF.createRange.from;rtqF.createTo=rtqF.createRange.to;renderRTQAll()});
+  buildDateRange($('rtqCollectRange'),'Collect date',rtqF.collectRange={from:rtqF.collectFrom,to:rtqF.collectTo},()=>{rtqF.collectFrom=rtqF.collectRange.from;rtqF.collectTo=rtqF.collectRange.to;renderRTQAll()});
+
+  $('rtqSearch').oninput=()=>{rtqF.search=$('rtqSearch').value.trim().toLowerCase();renderRTQAll()};
+  buildWeightFilter();
+  $('rtqAdvBtn').onclick=()=>{const adv=$('rtqAdv');adv.classList.toggle('open');$('rtqAdvBtn').textContent=adv.classList.contains('open')?'▴ Hide filters':'▾ More filters'};
+  $('rtqReset').onclick=()=>{
+    rtqF={curHubs:new Set(),fromHubs:new Set(),finalHubs:new Set(),statuses:new Set(),pkgExcs:new Set(),delExcs:new Set(),attempts:new Set(),customers:new Set(),shippers:new Set(),states:new Set(),cities:new Set(),districts:new Set(),drivers:new Set(),payTypes:new Set(),bizTypes:new Set(),
+      createFrom:'',createTo:'',collectFrom:'',collectTo:'',createRange:{from:'',to:''},collectRange:{from:'',to:''},
+      weightMode:'',weightVal1:'',weightVal2:'',search:''};
+    $('rtqSearch').value='';
+    $('rtqWeightMode').value='';$('rtqWeightVal1').value='';$('rtqWeightVal2').value='';$('rtqWeightVal2').style.display='none';$('rtqWeightVal1').style.display='none';$('rtqWeightFilter').classList.remove('active');
+    setupRTQFilters();renderRTQAll();
+  };
+}
+
+/* ═══ FILTERS ═══ */
+function filteredOFD(){return ofdData.filter(r=>{
+  if(ofdF.hubs.size&&!ofdF.hubs.has(r.hub||'(No hub)'))return false;
+  if(ofdF.city&&r.city!==ofdF.city)return false;
+  if(ofdF.result==='sign'&&r.result!=='sign')return false;
+  if(ofdF.result==='fail'&&r.result==='sign')return false;
+  if(ofdF.payment&&r.payType!==ofdF.payment)return false;
+  return true;
+})}
+
+function filteredRTQ(){return rtqData.filter(r=>{
+  if(rtqF.curHubs.size&&!rtqF.curHubs.has(r.currentHub))return false;
+  if(rtqF.fromHubs.size&&!rtqF.fromHubs.has(r.fromHub))return false;
+  if(rtqF.finalHubs.size&&!rtqF.finalHubs.has(r.finalHub))return false;
+  if(rtqF.statuses.size&&!rtqF.statuses.has(r.status))return false;
+  if(rtqF.attempts.size){const k=r.ofdTimes===0?'Not yet':'Attempt '+r.ofdTimes;if(!rtqF.attempts.has(k))return false;}
+  if(rtqF.pkgExcs.size&&!rtqF.pkgExcs.has(r.pkgException))return false;
+  if(rtqF.delExcs.size&&!rtqF.delExcs.has(r.deliveryException))return false;
+  if(rtqF.customers.size&&!rtqF.customers.has(r.customer))return false;
+  if(rtqF.shippers.size&&!rtqF.shippers.has(r.shipper))return false;
+  if(rtqF.states.size&&!rtqF.states.has(r.state))return false;
+  if(rtqF.cities.size&&!rtqF.cities.has(r.city))return false;
+  if(rtqF.districts.size&&!rtqF.districts.has(r.district))return false;
+  if(rtqF.drivers.size&&!rtqF.drivers.has(r.driver))return false;
+  if(rtqF.payTypes.size&&!rtqF.payTypes.has(r.payType))return false;
+  if(rtqF.bizTypes.size&&!rtqF.bizTypes.has(r.bizType))return false;
+  if(rtqF.createFrom&&r.create&&r.create<rtqF.createFrom)return false;
+  if(rtqF.createTo&&r.create&&r.create>rtqF.createTo)return false;
+  if(rtqF.collectFrom&&r.collect&&r.collect<rtqF.collectFrom)return false;
+  if(rtqF.collectTo&&r.collect&&r.collect>rtqF.collectTo)return false;
+  if(rtqF.weightMode){
+    const v1=parseFloat(rtqF.weightVal1),v2=parseFloat(rtqF.weightVal2);
+    const g=r.weight;
+    if(rtqF.weightMode==='lt'&&(!isFinite(v1)||g>=v1*1000))return false;
+    if(rtqF.weightMode==='gt'&&(!isFinite(v1)||g<=v1*1000))return false;
+    if(rtqF.weightMode==='between'){if(!isFinite(v1)||!isFinite(v2))return false;if(g<v1*1000||g>v2*1000)return false}
+  }
+  if(rtqF.search){
+    const hay=[r.track,r.packageId,r.packageNo,r.driver,r.shipper,r.customer,r.city,r.district,r.recipient,r.phone].join(' ').toLowerCase();
+    if(!hay.includes(rtqF.search))return false;
+  }
+  return true;
+})}
+
+/* ═══ TABS ═══ */
+const TAB_LABELS={dashboard:'Dashboard',failures:'Failure Analysis',attempts:'OFD Attempts',cod:'COD & Payment',priority:'Priority Clients',calling:'Calling Audit',signrate:'Sign Rate',quality:'Data Quality',rtqDashboard:'RTQ Overview',rtqStatus:'Status Deep Dive',rtqAttempts:'OFD Attempts',rtqNotOfd:'Not yet OFD',rtqTiming:'Timing & Aging',rtqGeo:'Geography',rtqDrivers:'Drivers',rtqWeight:'Weight & Volume',rtqExceptions:'Exceptions',rtqClients:'Clients & Shippers',rtqHubs:'Hub Analysis',rtqTable:'Full Table'};
+const TAB_ORDER=Object.keys(TAB_LABELS);
+const isRtqTab=id=>id&&id.startsWith('rtq');
+
+function renderTabbar(){
+  const bar=$('tabbar');
+  bar.innerHTML=openTabs.map(id=>`<div class="tab-item ${isRtqTab(id)?'rtq':''} ${id===activeTab?'active':''}" data-tab="${id}"><span class="tab-title">${TAB_LABELS[id]||id}</span><span class="tab-close" data-close="${id}">×</span></div>`).join('')+`<div class="tab-new" id="newTabBtn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><div class="tab-new-menu" id="newTabMenu"></div></div>`;
+  const menu=$('newTabMenu');
+  const ofdAvail=TAB_ORDER.slice(0,8).filter(id=>ofdData.length);
+  const rtqAvail=TAB_ORDER.slice(8).filter(id=>rtqData.length);
+  menu.innerHTML=`${ofdAvail.length?'<div class="menu-sec">Performance · OFD</div>'+ofdAvail.map(id=>`<button data-open="${id}">${TAB_LABELS[id]}</button>`).join(''):''}${rtqAvail.length?'<div class="menu-sec">Returns · RTQ</div>'+rtqAvail.map(id=>`<button class="rtq" data-open="${id}">${TAB_LABELS[id]}</button>`).join(''):''}`;
+  bar.querySelectorAll('[data-tab]').forEach(t=>t.addEventListener('click',e=>{if(e.target.dataset.close)return;activateTab(t.dataset.tab)}));
+  bar.querySelectorAll('[data-close]').forEach(c=>c.addEventListener('click',e=>{e.stopPropagation();closeTab(c.dataset.close)}));
+  const nb=$('newTabBtn');
+  if(nb){nb.addEventListener('click',e=>{e.stopPropagation();menu.classList.toggle('open')});
+    menu.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();menu.classList.remove('open');openTab(b.dataset.open)}));
+    document.addEventListener('click',ev=>{if(!nb.contains(ev.target))menu.classList.remove('open')});}
+}
+function openTab(id){if(!openTabs.includes(id)){openTabs.push(id);renderTabbar()}activateTab(id)}
+function activateTab(id){
+  if(!openTabs.includes(id))openTabs.push(id);
+  activeTab=id;currentSection=id;renderTabbar();
+  $$('.section').forEach(s=>s.classList.toggle('active',s.id===id));
+  $$('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.section===id));
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(id==='dashboard')setTimeout(()=>chart&&chart.resize(),50);
+  if(isRtqTab(id))setTimeout(()=>Object.values(RTQ_CHARTS).forEach(c=>c&&c.resize()),50);
+}
+function closeTab(id){
+  const el=document.querySelector(`[data-tab="${id}"]`);
+  if(el)el.classList.add('closing');
+  setTimeout(()=>{
+    openTabs=openTabs.filter(x=>x!==id);
+    if(activeTab===id){
+      if(!openTabs.length)openTabs=[ofdData.length?'dashboard':rtqData.length?'rtqDashboard':'dashboard'];
+      const idx=TAB_ORDER.indexOf(id);let next=null;
+      for(let i=idx+1;i<TAB_ORDER.length;i++){if(openTabs.includes(TAB_ORDER[i])){next=TAB_ORDER[i];break}}
+      if(!next)for(let i=idx-1;i>=0;i--){if(openTabs.includes(TAB_ORDER[i])){next=TAB_ORDER[i];break}}
+      activateTab(next||openTabs[openTabs.length-1]);
+    } else renderTabbar();
+  },200);
+}
+
+/* ═══ CHART HELPERS ═══ */
+function cssVar(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
+function mkChart(id,cfg,key){
+  const el=document.getElementById(id);if(!el)return null;
+  if(key&&RTQ_CHARTS[key]){try{RTQ_CHARTS[key].destroy()}catch(e){}}
+  const c=new Chart(el.getContext('2d'),cfg);
+  if(key)RTQ_CHARTS[key]=c;
+  return c;
+}
+const PALETTE_V=['#7c3aed','#a78bfa','#c084fc','#8b5cf6','#6366f1','#a855f7','#d8b4fe','#c4b5fd','#e9d5ff','#8b5cf6'];
+const PALETTE_STATUS=['#13996c','#c07c14','#7c3aed','#64748b','#3b8bd8','#e31b35','#22c55e','#f59e0b'];
+function baseOpts(extra){
+  const muted=cssVar('--muted')||'#64748b',grid=cssVar('--line')||'#e7edf3';
+  const o={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#07111F',padding:10}},scales:{x:{grid:{display:false},ticks:{color:muted,font:{size:9}}},y:{beginAtZero:true,grid:{color:grid},ticks:{color:muted,font:{size:9,family:'JetBrains Mono'}}}}};
+  if(extra){for(const k in extra){if(typeof extra[k]==='object'&&!Array.isArray(extra[k])&&o[k])Object.assign(o[k],extra[k]);else o[k]=extra[k]}}
+  return o;
+}
+
+/* ═══ AGGREGATION ═══ */
+function aggregate(rows,key){const m={};rows.forEach(r=>{const n=r[key]||'Unknown';if(!m[n])m[n]={n,t:0,s:0,f:0};m[n].t++;if(r.result==='sign')m[n].s++;else m[n].f++});return Object.values(m).sort((a,b)=>(b.s/b.t)-(a.s/a.t)||b.t-a.t)}
+function rateClass(n){return n>=target?'good':n>=target*.75?'warn':'bad'}
+function rateTag(n){return `<span class="rate ${rateClass(n)}">${n.toFixed(1)}%</span>`}
+function animateCount(el,target){const isF=!Number.isInteger(target)&&Math.abs(target)<100000;const dur=800,t0=performance.now();(function tick(t){const p=Math.min((t-t0)/dur,1);const e=1-Math.pow(1-p,3);const v=target*e;el.textContent=isF?v.toFixed(1):Math.round(v).toLocaleString();if(p<1)requestAnimationFrame(tick)})(t0);}
+
+/* ═══ OFD RENDERING ═══ */
+function renderOFD(){
+  if(!ofdData.length)return;
+  const rows=filteredOFD();
+  $('ofdFilteredCount').textContent=rows.length.toLocaleString();
+  const signed=rows.filter(r=>r.result==='sign').length,total=rows.length,failed=total-signed,rate=total?signed/total*100:0,cod=rows.filter(r=>r.result==='sign').reduce((a,r)=>a+r.cash+r.pos,0),drivers=new Set(rows.map(r=>r.driver)).size;
+  $('summaryLine').textContent=`${rows.length.toLocaleString()} shipments · ${signed.toLocaleString()} delivered · ${srcFilesOFD.length} source file${srcFilesOFD.length===1?'':'s'}`;
+  $('kpis').innerHTML=[
+    {l:'Total OFD',v:total,c:'blue'},{l:'Delivered',v:signed,c:'green'},{l:'Failed',v:failed,c:'red'},
+    {l:'Success Rate',v:rate,c:'blue',dec:1,suf:'%'},{l:'COD Collected',v:Math.round(cod),c:'amber',pre:'SAR '},{l:'Active Fleet',v:drivers,c:'violet'}
+  ].map(k=>`<div class="kpi ${k.c}"><div class="kpi-label">${k.l}</div><div class="kpi-value" data-v="${k.v}" data-dec="${k.dec||0}" data-pre="${k.pre||''}" data-suf="${k.suf||''}"></div><div class="kpi-note">—</div></div>`).join('');
+  $$('#kpis .kpi-value').forEach(el=>{const v=Number(el.dataset.v),d=Number(el.dataset.dec||0),pre=el.dataset.pre||'',suf=el.dataset.suf||'';const dur=800,t0=performance.now();(function tick(t){const p=Math.min((t-t0)/dur,1);const e=1-Math.pow(1-p,3);const vv=v*e;el.textContent=pre+(d?vv.toFixed(d):Math.round(vv).toLocaleString())+suf;if(p<1)requestAnimationFrame(tick)})(t0)});
+
+  let items=aggregate(rows,view==='driver'?'driver':'shipper');
+  const q=$('searchInput').value.trim().toLowerCase();
+  if(q)items=items.filter(x=>x.n.toLowerCase().includes(q));
+  $('rankingTitle').textContent=view==='driver'?'Driver ranking':'Client ranking';
+  $('rankingCount').textContent=`${items.length} ${view==='driver'?'drivers':'clients'}`;
+  const per=30,pages=Math.max(1,Math.ceil(items.length/per));pageNo=Math.min(pageNo,pages);
+  const slice=items.slice((pageNo-1)*per,pageNo*per);
+  $('rankHead').innerHTML=`<tr><th>Rank</th><th class="left">${view==='driver'?'Driver':'Client'}</th><th>Total</th><th>Signed</th><th>Failed</th><th>Rate</th></tr>`;
+  $('rankBody').innerHTML=slice.length?slice.map((x,i)=>{const rt=x.t?x.s/x.t*100:0;const rank=(pageNo-1)*per+i+1;return `<tr data-name="${esc(x.n)}"><td>${rank}</td><td class="left name">${esc(x.n)}</td><td><button class="num violet">${x.t}</button></td><td><button class="num green">${x.s}</button></td><td><button class="num red">${x.f}</button></td><td>${rateTag(rt)}</td></tr>`}).join(''):'<tr><td colspan="6" class="empty">No data</td></tr>';
+  $$('#rankBody tr').forEach(tr=>tr.onclick=()=>{const k=view==='driver'?'driver':'shipper';openModal(rows.filter(r=>r[k]===tr.dataset.name),tr.dataset.name)});
+  $('pagination').innerHTML=`<span>Page ${pageNo} of ${pages}</span><div class="pages"><button class="page-btn" ${pageNo===1?'disabled':''} onclick="window.__ofdPage(${pageNo-1})">‹</button><span class="page-btn active">${pageNo}</span><button class="page-btn" ${pageNo===pages?'disabled':''} onclick="window.__ofdPage(${pageNo+1})">›</button></div>`;
+  window.__ofdPage=n=>{pageNo=n;renderOFD()};
+  if(chart)chart.destroy();
+  const top=(view==='driver'?items:items.slice().sort((a,b)=>b.t-a.t)).slice(0,8);
+  $('chartTitle').textContent=view==='driver'?'Top driver rate':'Top client volume';
+  chart=new Chart($('mainChart'),{type:'bar',data:{labels:top.map(x=>x.n.length>16?x.n.slice(0,15)+'…':x.n),datasets:[{data:top.map(x=>view==='driver'?+(x.s/x.t*100).toFixed(1):x.t),backgroundColor:top.map(x=>(x.s/x.t*100)>=target?cssVar('--blue'):cssVar('--red')),borderRadius:6,borderSkipped:false}]},options:baseOpts({scales:{y:{max:view==='driver'?100:undefined,ticks:{color:cssVar('--muted'),callback:v=>view==='driver'?v+'%':v}}}})});
+}
+
+function renderOFDAll(){
+  if(!ofdData.length)return;
+  renderOFD();
+  const rows=filteredOFD();
+  const fBody=$('failureBody');
+  if(fBody){const m={};rows.filter(r=>r.result!=='sign').forEach(r=>{const k=r.fail||'Unknown';m[k]=(m[k]||0)+1});const failCount=rows.filter(r=>r.result!=='sign').length||1;
+    fBody.innerHTML=Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([n,c],i)=>`<tr data-r="${esc(n)}"><td>${i+1}</td><td class="left name">${esc(n)}</td><td><button class="num red">${c}</button></td><td>${(c/failCount*100).toFixed(1)}%</td></tr>`).join('')||'<tr><td colspan="4" class="empty">No data</td></tr>';
+    $$('#failureBody tr').forEach(tr=>tr.onclick=()=>openModal(rows.filter(r=>r.result!=='sign'&&(r.fail||'Unknown')===tr.dataset.r),tr.dataset.r));}
+  const attGrid=$('attemptGrid');
+  if(attGrid){const m={};rows.forEach(r=>{if(!m[r.ofdNum])m[r.ofdNum]={n:r.ofdNum,t:0,s:0};m[r.ofdNum].t++;if(r.result==='sign')m[r.ofdNum].s++});
+    attGrid.innerHTML=Object.values(m).sort((a,b)=>a.n-b.n).map(x=>{const rt=x.t?x.s/x.t*100:0;return `<div class="metric-card violet" data-att="${x.n}"><h3>Attempt ${x.n}</h3><div class="metric-big">${rt.toFixed(1)}%</div><div class="mini-list"><div class="mini-row"><span>Total</span><b>${x.t}</b></div><div class="mini-row"><span>Signed</span><b style="color:var(--green)">${x.s}</b></div><div class="mini-row"><span>Failed</span><b style="color:var(--red)">${x.t-x.s}</b></div></div></div>`}).join('');
+    $$('#attemptGrid .metric-card').forEach(c=>c.onclick=()=>openModal(rows.filter(r=>r.ofdNum===Number(c.dataset.att)),'Attempt '+c.dataset.att));}
+  const codGrid=$('codGrid');
+  if(codGrid){const g=[['COD',rows.filter(r=>r.payType==='COD')],['Pre-paid',rows.filter(r=>r.payType!=='COD')]];
+    codGrid.innerHTML=g.map(([n,rs])=>{const s=rs.filter(r=>r.result==='sign'),rt=rs.length?s.length/rs.length*100:0,cash=s.reduce((a,r)=>a+r.cash+r.pos,0);return `<div class="metric-card violet"><h3>${n}</h3><div class="metric-big">${rt.toFixed(1)}%</div><div class="mini-list"><div class="mini-row"><span>Total</span><b>${rs.length}</b></div><div class="mini-row"><span>Delivered</span><b style="color:var(--green)">${s.length}</b></div><div class="mini-row"><span>Collected</span><b>SAR ${Math.round(cash).toLocaleString()}</b></div></div></div>`}).join('');}
+  const priGrid=$('priorityGrid');
+  if(priGrid){const top=aggregate(rows,'shipper').sort((a,b)=>b.t-a.t).slice(0,6);
+    priGrid.innerHTML=top.map(c=>{const d=aggregate(rows.filter(r=>r.shipper===c.n),'driver').sort((a,b)=>b.t-a.t).slice(0,4);return `<div class="metric-card violet"><h3>${esc(c.n)}</h3><div class="metric-big">${(c.s/c.t*100).toFixed(1)}%</div><div class="mini-list">${d.map(x=>`<div class="mini-row"><span>${esc(x.n)}</span><b>${x.t}</b></div>`).join('')}</div></div>`}).join('');}
+  const callBody=$('callingBody');
+  if(callBody){const arr=rows.filter(r=>r.fail.toLowerCase().includes('no answer')).sort((a,b)=>b.calls-a.calls).slice(0,80);
+    callBody.innerHTML=arr.map((r,i)=>`<tr data-t="${esc(r.track)}"><td>${i+1}</td><td class="left name">${esc(r.driver)}</td><td class="left mono" style="color:var(--blue)">${esc(r.track)}</td><td><span class="num amber">${r.calls}</span></td></tr>`).join('')||'<tr><td colspan="4" class="empty">No data</td></tr>';
+    $$('#callingBody tr').forEach(tr=>tr.onclick=()=>{const rec=rows.find(r=>r.track===tr.dataset.t);if(rec)openModal([rec],rec.track)});}
+  const srBody=$('signBody');
+  if(srBody){const d=aggregate(rows,'driver');
+    $('signSummary').innerHTML=`<div class="kpi green"><div class="kpi-label">Today's rate</div><div class="kpi-value">${rows.length?(rows.filter(r=>r.result==='sign').length/rows.length*100).toFixed(1):'0.0'}%</div></div><div class="kpi violet"><div class="kpi-label">Target</div><div class="kpi-value">${target}%</div></div><div class="kpi green"><div class="kpi-label">Drivers on target</div><div class="kpi-value">${d.filter(x=>x.s/x.t*100>=target).length}</div></div><div class="kpi violet"><div class="kpi-label">Total drivers</div><div class="kpi-value">${d.length}</div></div>`;
+    srBody.innerHTML=d.map((x,i)=>{const r=x.s/x.t*100,g=r-target;return `<tr data-d="${esc(x.n)}"><td>${i+1}</td><td class="left name">${esc(x.n)}</td><td>${x.t}</td><td>${x.s}</td><td>${x.f}</td><td>${rateTag(r)}</td><td style="color:${g>=0?'var(--green)':'var(--red)'}">${g>=0?'+':''}${g.toFixed(1)}%</td></tr>`}).join('');
+    $$('#signBody tr').forEach(tr=>tr.onclick=()=>openModal(rows.filter(r=>r.driver===tr.dataset.d),tr.dataset.d));}
+  const qGrid=$('qualityGrid');
+  if(qGrid){const q2={valid:ofdData.length,unknownD:ofdData.filter(r=>r.driver==='Unknown').length};const score=Math.max(0,100-Math.round(q2.unknownD/Math.max(1,q2.valid)*25));
+    qGrid.innerHTML=[['Valid records',q2.valid],['Unknown drivers',q2.unknownD],['Unknown clients',ofdData.filter(r=>r.shipper==='Unknown').length],['Quality score',score+'%']].map(x=>`<div style="border:1px solid var(--line);padding:12px;border-radius:var(--r-sm)"><b style="display:block;font:700 20px 'Space Grotesk'">${x[1]}</b><span style="font-size:9px;color:var(--muted);text-transform:uppercase;font-weight:700">${x[0]}</span></div>`).join('');}
+}
+
+/* ═══ RTQ RENDERING ═══ */
+function renderRTQAll(){
+  if(!rtqData.length)return;
+  const rows=filteredRTQ();
+  $('rtqFilteredCount').textContent=rows.length.toLocaleString();
+  $('rtqTotalCount').textContent=rtqData.length.toLocaleString();
+  renderRTQOverview(rows);
+  renderRTQStatus(rows);
+  renderRTQAttempts(rows);
+  renderRTQNotOfd(rows);
+  renderRTQTiming(rows);
+  renderRTQGeo(rows);
+  renderRTQDrivers(rows);
+  renderRTQWeight(rows);
+  renderRTQExceptions(rows);
+  renderRTQClients(rows);
+  renderRTQHubs(rows);
+  renderRTQTable(rows);
+}
+
+function renderRTQOverview(rows){
+  const total=rows.length;
+  const signed=rows.filter(r=>r.status==='SIGN').length;
+  const ofd=rows.filter(r=>r.status==='OFD').length;
+  const inbound=rows.filter(r=>r.status==='INBOUND').length;
+  const notOfd=rows.filter(r=>r.ofdTimes===0).length;
+  const weight=rows.reduce((a,r)=>a+r.weight,0);
+
+  $('rtqTitle').textContent=`${detectedHub} — Returns Overview`;
+  $('rtqSub').textContent=`${rtqData.length.toLocaleString()} rows loaded from ${srcFilesRTQ.length} source file${srcFilesRTQ.length===1?'':'s'} · ${new Set(rows.map(r=>r.currentHub)).size} hubs`;
+  $('rtqKpis').innerHTML=[
+    {l:'Total returns',v:total,c:'violet'},{l:'Signed',v:signed,c:'green'},{l:'Currently OFD',v:ofd,c:'amber'},
+    {l:'Inbound',v:inbound,c:'violet'},{l:'Not yet OFD',v:notOfd,c:'red'},{l:'Total weight (kg)',v:Math.round(weight/1000),c:'violet'}
+  ].map(k=>`<div class="kpi ${k.c}"><div class="kpi-label">${k.l}</div><div class="kpi-value" data-v="${k.v}"></div><div class="kpi-note">—</div></div>`).join('');
+  $$('#rtqKpis .kpi-value').forEach(el=>animateCount(el,Number(el.dataset.v)));
+
+  const statusMap={};rows.forEach(r=>statusMap[r.status]=(statusMap[r.status]||0)+1);
+  const statusArr=Object.entries(statusMap).sort((a,b)=>b[1]-a[1]);
+  mkChart('rtqStatusChart',{type:'doughnut',data:{labels:statusArr.map(s=>s[0]),datasets:[{data:statusArr.map(s=>s[1]),backgroundColor:PALETTE_STATUS,borderWidth:0,spacing:3,hoverOffset:10}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'bottom',labels:{color:cssVar('--muted'),font:{size:10,weight:'600'},boxWidth:10,boxHeight:10,usePointStyle:true,padding:10}},tooltip:{backgroundColor:'#07111F',padding:10}}}},'rtqStatusChart');
+
+  const aMap={};rows.forEach(r=>{const k=r.ofdTimes===0?'Not yet':'A'+r.ofdTimes;aMap[k]=(aMap[k]||0)+1});
+  const aArr=Object.entries(aMap).sort((a,b)=>{if(a[0]==='Not yet')return -1;if(b[0]==='Not yet')return 1;return a[0].localeCompare(b[0])});
+  mkChart('rtqAttemptChart',{type:'bar',data:{labels:aArr.map(a=>a[0]),datasets:[{data:aArr.map(a=>a[1]),backgroundColor:PALETTE_V,borderRadius:6,borderSkipped:false}]},options:baseOpts()},'rtqAttemptChart');
+
+  const tlMap={};rows.forEach(r=>{if(r.create)tlMap[r.create]=(tlMap[r.create]||0)+1});
+  const tlArr=Object.entries(tlMap).sort((a,b)=>a[0].localeCompare(b[0]));
+  mkChart('rtqTimelineChart',{type:'line',data:{labels:tlArr.map(t=>t[0]),datasets:[{data:tlArr.map(t=>t[1]),borderColor:cssVar('--violet'),backgroundColor:t=>{const ca=t.chart.chartArea;if(!ca)return'#7c3aed22';const ctx=t.chart.ctx;const g=ctx.createLinearGradient(0,ca.top,0,ca.bottom);g.addColorStop(0,'#7c3aed55');g.addColorStop(1,'#7c3aed00');return g},fill:true,tension:.35,borderWidth:2.5,pointRadius:3,pointBackgroundColor:cssVar('--violet'),pointBorderColor:'#fff',pointBorderWidth:2}]},options:baseOpts()},'rtqTimelineChart');
+
+  const eMap={};rows.forEach(r=>{if(r.pkgException)eMap[r.pkgException]=(eMap[r.pkgException]||0)+1;if(r.deliveryException)eMap[r.deliveryException]=(eMap[r.deliveryException]||0)+1});
+  const eArr=Object.entries(eMap).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  mkChart('rtqExceptionChart',{type:'bar',data:{labels:eArr.map(e=>e[0].length>18?e[0].slice(0,17)+'…':e[0]),datasets:[{data:eArr.map(e=>e[1]),backgroundColor:PALETTE_V,borderRadius:6,borderSkipped:false,maxBarThickness:28}]},options:baseOpts({indexAxis:'y'})},'rtqExceptionChart');
+}
+
+function renderRTQStatus(rows){
+  const sm={};rows.forEach(r=>{if(!sm[r.status])sm[r.status]={n:r.status,t:0,sign:0,hasLoad:0,hasCollect:0,hasCreate:0};const o=sm[r.status];o.t++;if(r.sign)o.sign++;if(r.load)o.hasLoad++;if(r.collect)o.hasCollect++;if(r.create)o.hasCreate++});
+  const arr=Object.values(sm).sort((a,b)=>b.t-a.t);
+  $('rtqStatusGrid').innerHTML=arr.map(s=>`<div class="metric-card violet" data-status="${esc(s.n)}"><h3><span class="status-badge ${s.n==='SIGN'?'sign':s.n==='OFD'?'ofd':s.n==='INBOUND'?'inbound':'other'}">${esc(s.n)}</span></h3><div class="metric-big">${s.t.toLocaleString()}</div><div class="mini-list"><div class="mini-row"><span>With Create</span><b>${s.hasCreate}</b></div><div class="mini-row"><span>With Collect</span><b>${s.hasCollect}</b></div><div class="mini-row"><span>With Load</span><b>${s.hasLoad}</b></div><div class="mini-row"><span>With Sign</span><b>${s.sign}</b></div></div></div>`).join('');
+  $$('#rtqStatusGrid .metric-card').forEach(c=>c.onclick=()=>openModalRTQ(rows.filter(r=>r.status===c.dataset.status),'Status: '+c.dataset.status));
+
+  const statuses=[...new Set(rows.map(r=>r.status))].sort();
+  const payTypes=[...new Set(rows.map(r=>r.payType))].filter(x=>x!=='—').sort();
+  if(!payTypes.length)payTypes.push('—');
+  $('rtqStatusTableHead').innerHTML=`<tr><th class="left">Status</th>${payTypes.map(p=>`<th>${esc(p)}</th>`).join('')}<th>Total</th></tr>`;
+  $('rtqStatusTableBody').innerHTML=statuses.map(st=>{const total=rows.filter(r=>r.status===st).length;return `<tr data-status="${esc(st)}"><td class="left name">${esc(st)}</td>${payTypes.map(p=>{const c=rows.filter(r=>r.status===st&&r.payType===p).length;return `<td>${c||'—'}</td>`}).join('')}<td><b>${total}</b></td></tr>`}).join('');
+  $$('#rtqStatusTableBody tr').forEach(tr=>tr.onclick=()=>openModalRTQ(rows.filter(r=>r.status===tr.dataset.status),'Status: '+tr.dataset.status));
+}
+
+function renderRTQAttempts(rows){
+  const am={};rows.forEach(r=>{const k=r.ofdTimes===0?'Not yet':r.ofdTimes;if(!am[k])am[k]={n:k,t:0,sign:0,ofd:0,inbound:0};const o=am[k];o.t++;if(r.status==='SIGN')o.sign++;else if(r.status==='OFD')o.ofd++;else if(r.status==='INBOUND')o.inbound++});
+  const arr=Object.values(am).sort((a,b)=>{if(a.n==='Not yet')return -1;if(b.n==='Not yet')return 1;return a.n-b.n});
+  $('rtqAttemptGrid').innerHTML=arr.map(a=>{const label=a.n==='Not yet'?'Not yet OFD':'Attempt '+a.n;const rate=a.t?((a.sign/a.t)*100).toFixed(1):'0.0';return `<div class="metric-card violet" data-att="${esc(a.n)}"><h3>${label}</h3><div class="metric-big">${rate}%</div><div class="mini-list"><div class="mini-row"><span>Total</span><b>${a.t}</b></div><div class="mini-row"><span>Signed</span><b style="color:var(--green)">${a.sign}</b></div><div class="mini-row"><span>Currently OFD</span><b style="color:var(--amber)">${a.ofd}</b></div><div class="mini-row"><span>Inbound</span><b style="color:var(--violet)">${a.inbound}</b></div></div></div>`}).join('');
+  $$('#rtqAttemptGrid .metric-card').forEach(c=>c.onclick=()=>{const n=c.dataset.att;const f=rows.filter(r=>{const k=r.ofdTimes===0?'Not yet':String(r.ofdTimes);return k===n});openModalRTQ(f,n==='Not yet'?'Not yet OFD':'Attempt '+n)});
+
+  $('rtqAttemptTableHead').innerHTML=`<tr><th class="left">Attempt</th><th>Total</th><th>Signed</th><th>OFD now</th><th>Inbound</th><th>Success %</th></tr>`;
+  $('rtqAttemptTableBody').innerHTML=arr.map(a=>{const rate=a.t?((a.sign/a.t)*100).toFixed(1):'0.0';const label=a.n==='Not yet'?'Not yet OFD':'Attempt '+a.n;return `<tr data-att="${esc(a.n)}"><td class="left name">${label}</td><td>${a.t}</td><td style="color:var(--green);font-weight:700">${a.sign}</td><td style="color:var(--amber)">${a.ofd}</td><td style="color:var(--violet)">${a.inbound}</td><td>${rateTag(parseFloat(rate))}</td></tr>`}).join('');
+  $$('#rtqAttemptTableBody tr').forEach(tr=>tr.onclick=()=>{const n=tr.dataset.att;const f=rows.filter(r=>{const k=r.ofdTimes===0?'Not yet':String(r.ofdTimes);return k===n});openModalRTQ(f,n==='Not yet'?'Not yet OFD':'Attempt '+n)});
+}
+
+function renderRTQNotOfd(rows){
+  const notOfd=rows.filter(r=>r.ofdTimes===0);
+  $('rtqNotOfdKpis').innerHTML=[
+    {l:'Not yet OFD',v:notOfd.length,c:'red'},{l:'With appointment',v:notOfd.filter(r=>r.appointment).length,c:'amber'},
+    {l:'Total weight (kg)',v:Math.round(notOfd.reduce((a,r)=>a+r.weight,0)/1000),c:'violet'},{l:'Unique cities',v:new Set(notOfd.map(r=>r.city)).size,c:'violet'}
+  ].map(k=>`<div class="kpi ${k.c}"><div class="kpi-label">${k.l}</div><div class="kpi-value" data-v="${k.v}"></div><div class="kpi-note">—</div></div>`).join('');
+  $$('#rtqNotOfdKpis .kpi-value').forEach(el=>animateCount(el,Number(el.dataset.v)));
+  $('rtqNotOfdCount').textContent=notOfd.length;
+  const per=40,pages=Math.max(1,Math.ceil(notOfd.length/per));rtqNotOfdPage=Math.min(rtqNotOfdPage,pages);
+  const sl=notOfd.slice((rtqNotOfdPage-1)*per,rtqNotOfdPage*per);
+  $('rtqNotOfdHead').innerHTML=`<tr><th>#</th><th class="left">Tracking</th><th class="left">Customer</th><th class="left">Shipper</th><th class="left">City</th><th class="left">Create</th><th>Weight g</th><th class="left">Status</th></tr>`;
+  $('rtqNotOfdBody').innerHTML=sl.length?sl.map((r,i)=>{const idx=(rtqNotOfdPage-1)*per+i+1;const st=r.status==='SIGN'?'sign':r.status==='OFD'?'ofd':r.status==='INBOUND'?'inbound':'other';return `<tr data-track="${esc(r.track)}"><td>${idx}</td><td class="left mono" style="color:var(--violet);font-weight:600">${esc(r.track)}</td><td class="left">${esc(r.customer)}</td><td class="left">${esc(r.shipper)}</td><td class="left">${esc(r.city)}</td><td class="left mono">${esc(r.create||'—')}</td><td>${r.weight||'—'}</td><td class="left"><span class="status-badge ${st}">${esc(r.status)}</span></td></tr>`}).join(''):'<tr><td colspan="8" class="empty">No backlog</td></tr>';
+  $$('#rtqNotOfdBody tr').forEach(tr=>tr.onclick=()=>{const rec=notOfd.find(r=>r.track===tr.dataset.track);if(rec)openModalRTQ([rec],rec.track)});
+  $('rtqNotOfdPgn').innerHTML=`<span>Page ${rtqNotOfdPage} of ${pages}</span><div class="pages"><button class="page-btn" ${rtqNotOfdPage===1?'disabled':''} data-np="${rtqNotOfdPage-1}">‹</button><span class="page-btn active">${rtqNotOfdPage}</span><button class="page-btn" ${rtqNotOfdPage===pages?'disabled':''} data-np="${rtqNotOfdPage+1}">›</button></div>`;
+  $$('#rtqNotOfdPgn [data-np]').forEach(b=>b.onclick=()=>{rtqNotOfdPage=Number(b.dataset.np);renderRTQNotOfd(rows)});
+}
+
+function renderRTQTiming(rows){
+  function diffH(a,b){if(!a||!b)return null;const d=(new Date(b)-new Date(a))/3600000;return d>=0?d:null}
+  const createC=rows.filter(r=>r.create).length,colC=rows.filter(r=>r.collect).length,loadC=rows.filter(r=>r.load).length,signC=rows.filter(r=>r.sign).length;
+  const cc=rows.map(r=>diffH(r.create,r.collect)).filter(x=>x!=null);
+  const ls=rows.map(r=>diffH(r.load,r.sign)).filter(x=>x!=null);
+  const avg=arr=>arr.length?arr.reduce((a,b)=>a+b,0)/arr.length:0;
+  $('rtqTimingKpis').innerHTML=[
+    {l:'With Create',v:createC,c:'violet'},{l:'With Collect',v:colC,c:'violet'},
+    {l:'With Load',v:loadC,c:'violet'},{l:'With Sign',v:signC,c:'green'},
+    {l:'Avg Create→Collect (h)',v:Math.round(avg(cc)),c:'violet'},{l:'Avg Load→Sign (h)',v:Math.round(avg(ls)),c:'green'}
+  ].map(k=>`<div class="kpi ${k.c}"><div class="kpi-label">${k.l}</div><div class="kpi-value" data-v="${k.v}"></div><div class="kpi-note">—</div></div>`).join('');
+  $$('#rtqTimingKpis .kpi-value').forEach(el=>animateCount(el,Number(el.dataset.v)));
+
+  mkChart('rtqStageChart',{type:'bar',data:{labels:['Create→Collect','Load→Sign'],datasets:[{data:[+avg(cc).toFixed(1),+avg(ls).toFixed(1)],backgroundColor:PALETTE_V,borderRadius:6,borderSkipped:false}]},options:baseOpts()},'rtqStageChart');
+
+  const now=new Date();
+  const ageBuckets=[{l:'0–1 day',min:0,max:1},{l:'2–3 days',min:1,max:3},{l:'4–7 days',min:3,max:7},{l:'8–14 days',min:7,max:14},{l:'15+ days',min:14,max:99999}];
+  ageBuckets.forEach(b=>b.n=0);
+  rows.forEach(r=>{if(!r.create)return;const age=(now-new Date(r.create))/86400000;for(const b of ageBuckets){if(age>=b.min&&age<b.max){b.n++;break}}});
+  mkChart('rtqAgingChart',{type:'bar',data:{labels:ageBuckets.map(b=>b.l),datasets:[{data:ageBuckets.map(b=>b.n),backgroundColor:PALETTE_V,borderRadius:6,borderSkipped:false}]},options:baseOpts()},'rtqAgingChart');
+
+  $('rtqAgingTableHead').innerHTML=`<tr><th class="left">Aging bucket</th><th>Count</th><th>Share</th></tr>`;
+  $('rtqAgingTableBody').innerHTML=ageBuckets.map(b=>{const pct=rows.length?(b.n/rows.length*100).toFixed(1):'0.0';return `<tr data-min="${b.min}" data-max="${b.max}"><td class="left name">${b.l}</td><td>${b.n}</td><td>${pct}%</td></tr>`}).join('');
+  $$('#rtqAgingTableBody tr').forEach(tr=>tr.onclick=()=>{const mn=Number(tr.dataset.min),mx=Number(tr.dataset.max);const f=rows.filter(r=>{if(!r.create)return false;const age=(now-new Date(r.create))/86400000;return age>=mn&&age<mx});openModalRTQ(f,'Aging: '+tr.querySelector('.name').textContent)});
+}
+
+function renderRTQGeo(rows){
+  const cMap={};rows.forEach(r=>cMap[r.city]=(cMap[r.city]||0)+1);
+  const cArr=Object.entries(cMap).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  mkChart('rtqCityChart',{type:'bar',data:{labels:cArr.map(c=>c[0]),datasets:[{data:cArr.map(c=>c[1]),backgroundColor:PALETTE_V,borderRadius:6,borderSkipped:false,maxBarThickness:30}]},options:baseOpts({indexAxis:'y'})},'rtqCityChart');
+
+  const dMap={};rows.forEach(r=>dMap[r.district]=(dMap[r.district]||0)+1);
+  const dArr=Object.entries(dMap).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  mkChart('rtqDistrictChart',{type:'bar',data:{labels:dArr.map(d=>d[0]),datasets:[{data:dArr.map(d=>d[1]),backgroundColor:PALETTE_V,borderRadius:6,borderSkipped:false,maxBarThickness:30}]},options:baseOpts({indexAxis:'y'})},'rtqDistrictChart');
+
+  const geo={};rows.forEach(r=>{const k=r.state+'|'+r.city+'|'+r.district;if(!geo[k])geo[k]={state:r.state,city:r.city,district:r.district,n:0,sign:0};const o=geo[k];o.n++;if(r.status==='SIGN')o.sign++});
+  let geoArr=Object.values(geo);
+  if(SORT.rtqGeo){
+    geoArr=sortData(geoArr,SORT.rtqGeo.key,SORT.rtqGeo.dir);
+  } else geoArr.sort((a,b)=>b.n-a.n);
+  geoArr=geoArr.slice(0,100);
+  $('rtqGeoTableHead').innerHTML=`<tr><th>#</th><th class="left sortable" data-sort="state">State<span class="sort-icon">⇅</span></th><th class="left sortable" data-sort="city">City<span class="sort-icon">⇅</span></th><th class="left sortable" data-sort="district">District<span class="sort-icon">⇅</span></th><th class="sortable" data-sort="n">Returns<span class="sort-icon">⇅</span></th><th class="sortable" data-sort="sign">Signed<span class="sort-icon">⇅</span></th><th>Rate</th></tr>`;
+  $('rtqGeoTableBody').innerHTML=geoArr.map((g,i)=>{const r=g.n?(g.sign/g.n*100):0;return `<tr data-state="${esc(g.state)}" data-city="${esc(g.city)}" data-district="${esc(g.district)}"><td>${i+1}</td><td class="left">${esc(g.state)}</td><td class="left">${esc(g.city)}</td><td class="left">${esc(g.district)}</td><td>${g.n}</td><td style="color:var(--green)">${g.sign}</td><td>${rateTag(r)}</td></tr>`}).join('');
+  $$('#rtqGeoTableBody tr').forEach(tr=>tr.onclick=()=>openModalRTQ(rows.filter(r=>r.state===tr.dataset.state&&r.city===tr.dataset.city&&r.district===tr.dataset.district),tr.dataset.city+' / '+tr.dataset.district));
+  $$('#rtqGeoTableHead th.sortable').forEach(th=>{const key=th.dataset.sort;const isThis=SORT.rtqGeo&&SORT.rtqGeo.key===key;th.classList.toggle('asc',isThis&&SORT.rtqGeo.dir===1);th.classList.toggle('desc',isThis&&SORT.rtqGeo.dir===-1);th.querySelector('.sort-icon').textContent=isThis?(SORT.rtqGeo.dir===1?'▲':'▼'):'⇅';th.onclick=()=>{if(!SORT.rtqGeo||SORT.rtqGeo.key!==key)SORT.rtqGeo={key,dir:-1};else SORT.rtqGeo.dir*=-1;renderRTQGeo(rows)}});
+}
+
+function renderRTQDrivers(rows){
+  const dm={};rows.forEach(r=>{const k=r.driver+'|'+r.driverAccount;if(!dm[k])dm[k]={driver:r.driver,account:r.driverAccount,t:0,sign:0,ofd:0,inbound:0};const o=dm[k];o.t++;if(r.status==='SIGN')o.sign++;else if(r.status==='OFD')o.ofd++;else if(r.status==='INBOUND')o.inbound++});
+  let arr=Object.values(dm);
+  if(SORT.rtqDrivers)arr=sortData(arr,SORT.rtqDrivers.key,SORT.rtqDrivers.dir);
+  else arr.sort((a,b)=>b.t-a.t);
+  $('rtqDriverCount').textContent=arr.length+' drivers';
+  const per=40,pages=Math.max(1,Math.ceil(arr.length/per));rtqDriverPage=Math.min(rtqDriverPage,pages);
+  const sl=arr.slice((rtqDriverPage-1)*per,rtqDriverPage*per);
+  $('rtqDriverTableHead').innerHTML=`<tr><th>#</th><th class="left sortable" data-sort="driver">Driver<span class="sort-icon">⇅</span></th><th class="left sortable" data-sort="account">Account<span class="sort-icon">⇅</span></th><th class="sortable" data-sort="t">Returns<span class="sort-icon">⇅</span></th><th class="sortable" data-sort="sign">Signed<span class="sort-icon">⇅</span></th><th class="sortable" data-sort="ofd">OFD<span class="sort-icon">⇅</span></th><th class="sortable" data-sort="inbound">Inbound<span class="sort-icon">⇅</span></th></tr>`;
+  $('rtqDriverTableBody').innerHTML=sl.map((d,i)=>{const idx=(rtqDriverPage-1)*per+i+1;return `<tr data-driver="${esc(d.driver)}" data-account="${esc(d.account)}"><td>${idx}</td><td class="left name">${esc(d.driver)}</td><td class="left mono" style="color:var(--violet)">${esc(d.account||'—')}</td><td>${d.t}</td><td style="color:var(--green)">${d.sign}</td><td style="color:var(--amber)">${d.ofd}</td><td style="color:var(--violet)">${d.inbound}</td></tr>`}).join('')||'<tr><td colspan="7" class="empty">No data</td></tr>';
+  $$('#rtqDriverTableBody tr').forEach(tr=>tr.onclick=()=>openModalRTQ(rows.filter(r=>r.driver===tr.dataset.driver&&r.driverAccount===tr.dataset.account),tr.dataset.driver));
+  $('rtqDriverPgn').innerHTML=`<span>Page ${rtqDriverPage} of ${pages}</span><div class="pages"><button class="page-btn" ${rtqDriverPage===1?'disabled':''} data-dp="${rtqDriverPage-1}">‹</button><span class="page-btn active">${rtqDriverPage}</span><button class="page-btn" ${rtqDriverPage===pages?'disabled':''} data-dp="${rtqDriverPage+1}">›</button></div>`;
+  $$('#rtqDriverPgn [data-dp]').forEach(b=>b.onclick=()=>{rtqDriverPage=Number(b.dataset.dp);renderRTQDrivers(rows)});
+  $$('#rtqDriverTableHead th.sortable').forEach(th=>{const key=th.dataset.sort;const isThis=SORT.rtqDrivers&&SORT.rtqDrivers.key===key;th.classList.toggle('asc',isThis&&SORT.rtqDrivers.dir===1);th.classList.toggle('desc',isThis&&SORT.rtqDrivers.dir===-1);th.querySelector('.sort-icon').textContent=isThis?(SORT.rtqDrivers.dir===1?'▲':'▼'):'⇅';th.onclick=()=>{if(!SORT.rtqDrivers||SORT.rtqDrivers.key!==key)SORT.rtqDrivers={key,dir:-1};else SORT.rtqDrivers.dir*=-1;renderRTQDrivers(rows)}});
+}
+
+function renderRTQWeight(rows){
+  const total=rows.reduce((a,r)=>a+r.weight,0);
+  const avg=rows.length?total/rows.length:0;
+  const max=rows.reduce((a,r)=>Math.max(a,r.weight),0);
+  const large=rows.filter(r=>r.volume>0).length;
+  $('rtqWeightKpis').innerHTML=[
+    {l:'Total weight (kg)',v:Math.round(total/1000),c:'violet'},
+    {l:'Avg weight (g)',v:Math.round(avg),c:'violet'},
+    {l:'Max weight (g)',v:Math.round(max),c:'red'},
+    {l:'Large items (CBM)',v:large,c:'violet'}
+  ].map(k=>`<div class="kpi ${k.c}"><div class="kpi-label">${k.l}</div><div class="kpi-value" data-v="${k.v}"></div><div class="kpi-note">—</div></div>`).join('');
+  $$('#rtqWeightKpis .kpi-value').forEach(el=>animateCount(el,Number(el.dataset.v)));
+  const buckets=[{l:'< 500g',min:0,max:500},{l:'500g–1kg',min:500,max:1000},{l:'1–2kg',min:1000,max:2000},{l:'2–5kg',min:2000,max:5000},{l:'5–10kg',min:5000,max:10000},{l:'10kg+',min:10000,max:1e12}];
+  buckets.forEach(b=>b.n=0);rows.forEach(r=>{for(const b of buckets){if(r.weight>=b.min&&r.weight<b.max){b.n++;break}}});
+  mkChart('rtqWeightChart',{type:'bar',data:{labels:buckets.map(b=>b.l),datasets:[{data:buckets.map(b=>b.n),backgroundColor:PALETTE_V,borderRadius:6,borderSkipped:false}]},options:baseOpts()},'rtqWeightChart');
+  const cMap={};rows.forEach(r=>{if(!cMap[r.customer])cMap[r.customer]={n:r.customer,w:0};cMap[r.customer].w+=r.weight});
+  const cArr=Object.values(cMap).sort((a,b)=>b.w-a.w).slice(0,8);
+  mkChart('rtqWeightClientChart',{type:'bar',data:{labels:cArr.map(c=>c.n),datasets:[{data:cArr.map(c=>Math.round(c.w/1000)),backgroundColor:PALETTE_V,borderRadius:6,borderSkipped:false,maxBarThickness:30}]},options:baseOpts({indexAxis:'y',plugins:{tooltip:{callbacks:{label:c=>' '+c.parsed.x+' kg'}}}})},'rtqWeightClientChart');
+  const wMap={};rows.forEach(r=>{if(!wMap[r.customer])wMap[r.customer]={cust:r.customer,cnt:0,total:0,avg:0};const o=wMap[r.customer];o.cnt++;o.total+=r.weight});
+  Object.values(wMap).forEach(o=>o.avg=o.cnt?o.total/o.cnt:0);
+  let wArr=Object.values(wMap);
+  if(SORT.rtqWeight)wArr=sortData(wArr,SORT.rtqWeight.key,SORT.rtqWeight.dir);
+  else wArr.sort((a,b)=>b.total-a.total);
+  wArr=wArr.slice(0,50);
+  $('rtqWeightTableHead').innerHTML=`<tr><th class="left sortable" data-sort="cust">Customer<span class="sort-icon">⇅</span></th><th class="sortable" data-sort="cnt">Returns<span class="sort-icon">⇅</span></th><th class="sortable" data-sort="total">Total weight<span class="sort-icon">⇅</span></th><th>Avg weight</th></tr>`;
+  $('rtqWeightTableBody').innerHTML=wArr.map(w=>`<tr data-cust="${esc(w.cust)}"><td class="left name">${esc(w.cust)}</td><td>${w.cnt}</td><td>${(w.total/1000).toFixed(1)} kg</td><td>${Math.round(w.avg)} g</td></tr>`).join('');
+  $$('#rtqWeightTableBody tr').forEach(tr=>tr.onclick=()=>openModalRTQ(rows.filter(r=>r.customer===tr.dataset.cust),'Weight: '+tr.dataset.cust));
+  $$('#rtqWeightTableHead th.sortable').forEach(th=>{const key=th.dataset.sort;const isThis=SORT.rtqWeight&&SORT.rtqWeight.key===key;th.classList.toggle('asc',isThis&&SORT.rtqWeight.dir===1);th.classList.toggle('desc',isThis&&SORT.rtqWeight.dir===-1);th.querySelector('.sort-icon').textContent=isThis?(SORT.rtqWeight.dir===1?'▲':'▼'):'⇅';th.onclick=()=>{if(!SORT.rtqWeight||SORT.rtqWeight.key!==key)SORT.rtqWeight={key,dir:-1};else SORT.rtqWeight.dir*=-1;renderRTQWeight(rows)}});
+}
+
+function renderRTQExceptions(rows){
+  const pMap={};rows.forEach(r=>{if(r.pkgException)pMap[r.pkgException]=(pMap[r.pkgException]||0)+1});
+  const pArr=Object.entries(pMap).sort((a,b)=>b[1]-a[1]);const tot=rows.length||1;
+  $('rtqPkgExcBody').innerHTML=pArr.length?pArr.map(([n,c],i)=>`<tr data-exc="${esc(n)}"><td>${i+1}</td><td class="left name">${esc(n)}</td><td>${c}</td><td>${(c/tot*100).toFixed(1)}%</td></tr>`).join(''):'<tr><td colspan="4" class="empty">No exceptions</td></tr>';
+  $$('#rtqPkgExcBody tr').forEach(tr=>tr.onclick=()=>openModalRTQ(rows.filter(r=>r.pkgException===tr.dataset.exc),tr.dataset.exc));
+  const dMap={};rows.forEach(r=>{if(r.deliveryException)dMap[r.deliveryException]=(dMap[r.deliveryException]||0)+1});
+  const dArr=Object.entries(dMap).sort((a,b)=>b[1]-a[1]);
+  $('rtqDelExcBody').innerHTML=dArr.length?dArr.map(([n,c],i)=>`<tr data-exc="${esc(n)}"><td>${i+1}</td><td class="left name">${esc(n)}</td><td>${c}</td><td>${(c/tot*100).toFixed(1)}%</td></tr>`).join(''):'<tr><td colspan="4" class="empty">No exceptions</td></tr>';
+  $$('#rtqDelExcBody tr').forEach(tr=>tr.onclick=()=>openModalRTQ(rows.filter(r=>r.deliveryException===tr.dataset.exc),tr.dataset.exc));
+}
+
+function renderRTQClients(rows){
+  const cMap={};rows.forEach(r=>{if(!cMap[r.customer])cMap[r.customer]={n:r.customer,t:0,sign:0};const o=cMap[r.customer];o.t++;if(r.status==='SIGN')o.sign++});
+  let cArr=Object.values(cMap);
+  if(SORT.rtqClients)cArr=sortData(cArr,SORT.rtqClients.key,SORT.rtqClients.dir);
+  else cArr.sort((a,b)=>b.t-a.t);
+  $('rtqCustomerTableHead').innerHTML=`<tr><th class="left sortable" data-sort="n">Customer<span class="sort-icon">⇅</span></th><th class="sortable" data-sort="t">Returns<span class="sort-icon">⇅</span></th><th class="sortable" data-sort="sign">Signed<span class="sort-icon">⇅</span></th><th>Rate</th></tr>`;
+  $('rtqCustomerTableBody').innerHTML=cArr.map(c=>{const r=c.t?(c.sign/c.t*100):0;return `<tr data-c="${esc(c.n)}"><td class="left name">${esc(c.n)}</td><td>${c.t}</td><td style="color:var(--green)">${c.sign}</td><td>${rateTag(r)}</td></tr>`}).join('');
+  $$('#rtqCustomerTableBody tr').forEach(tr=>tr.onclick=()=>openModalRTQ(rows.filter(r=>r.customer===tr.dataset.c),tr.dataset.c));
+  const sMap={};rows.forEach(r=>{if(!sMap[r.shipper])sMap[r.shipper]={n:r.shipper,t:0,sign:0};const o=sMap[r.shipper];o.t++;if(r.status==='SIGN')o.sign++});
+  let sArr=Object.values(sMap);
+  if(SORT.rtqShippers)sArr=sortData(sArr,SORT.rtqShippers.key,SORT.rtqShippers.dir);
+  else sArr.sort((a,b)=>b.t-a.t);
+  sArr=sArr.slice(0,30);
+  $('rtqShipperTableHead').innerHTML=`<tr><th class="left sortable" data-sort="n">Shipper<span class="sort-icon">⇅</span></th><th class="sortable" data-sort="t">Returns<span class="sort-icon">⇅</span></th><th class="sortable" data-sort="sign">Signed<span class="sort-icon">⇅</span></th><th>Rate</th></tr>`;
+  $('rtqShipperTableBody').innerHTML=sArr.map(s=>{const r=s.t?(s.sign/s.t*100):0;return `<tr data-s="${esc(s.n)}"><td class="left name">${esc(s.n)}</td><td>${s.t}</td><td style="color:var(--green)">${s.sign}</td><td>${rateTag(r)}</td></tr>`}).join('');
+  $$('#rtqShipperTableBody tr').forEach(tr=>tr.onclick=()=>openModalRTQ(rows.filter(r=>r.shipper===tr.dataset.s),tr.dataset.s));
+  $$('#rtqCustomerTableHead th.sortable').forEach(th=>{const key=th.dataset.sort;const isThis=SORT.rtqClients&&SORT.rtqClients.key===key;th.classList.toggle('asc',isThis&&SORT.rtqClients.dir===1);th.classList.toggle('desc',isThis&&SORT.rtqClients.dir===-1);th.querySelector('.sort-icon').textContent=isThis?(SORT.rtqClients.dir===1?'▲':'▼'):'⇅';th.onclick=()=>{if(!SORT.rtqClients||SORT.rtqClients.key!==key)SORT.rtqClients={key,dir:-1};else SORT.rtqClients.dir*=-1;renderRTQClients(rows)}});
+  $$('#rtqShipperTableHead th.sortable').forEach(th=>{const key=th.dataset.sort;const isThis=SORT.rtqShippers&&SORT.rtqShippers.key===key;th.classList.toggle('asc',isThis&&SORT.rtqShippers.dir===1);th.classList.toggle('desc',isThis&&SORT.rtqShippers.dir===-1);th.querySelector('.sort-icon').textContent=isThis?(SORT.rtqShippers.dir===1?'▲':'▼'):'⇅';th.onclick=()=>{if(!SORT.rtqShippers||SORT.rtqShippers.key!==key)SORT.rtqShippers={key,dir:-1};else SORT.rtqShippers.dir*=-1;renderRTQClients(rows)}});
+}
+
+function renderRTQHubs(rows){
+  const curMap={};rows.forEach(r=>curMap[r.currentHub]=(curMap[r.currentHub]||0)+1);
+  const fromMap={};rows.forEach(r=>fromMap[r.fromHub]=(fromMap[r.fromHub]||0)+1);
+  const finalMap={};rows.forEach(r=>finalMap[r.finalHub]=(finalMap[r.finalHub]||0)+1);
+  const tot=rows.length||1;
+  const render=arr=>arr.map((a,i)=>`<tr data-h="${esc(a[0])}"><td>${i+1}</td><td class="left name">${esc(a[0])}</td><td>${a[1]}</td><td>${(a[1]/tot*100).toFixed(1)}%</td></tr>`).join('');
+  const curA=Object.entries(curMap).sort((a,b)=>b[1]-a[1]);
+  const fromA=Object.entries(fromMap).sort((a,b)=>b[1]-a[1]);
+  const finalA=Object.entries(finalMap).sort((a,b)=>b[1]-a[1]);
+  $('rtqCurHubBody').innerHTML=render(curA);
+  $('rtqFromHubBody').innerHTML=render(fromA);
+  $('rtqFinalHubBody').innerHTML=render(finalA);
+  $$('#rtqCurHubBody tr').forEach(tr=>tr.onclick=()=>openModalRTQ(rows.filter(r=>r.currentHub===tr.dataset.h),'Current: '+tr.dataset.h));
+  $$('#rtqFromHubBody tr').forEach(tr=>tr.onclick=()=>openModalRTQ(rows.filter(r=>r.fromHub===tr.dataset.h),'From: '+tr.dataset.h));
+  $$('#rtqFinalHubBody tr').forEach(tr=>tr.onclick=()=>openModalRTQ(rows.filter(r=>r.finalHub===tr.dataset.h),'Final: '+tr.dataset.h));
+}
+
+let rtqTablePage=1;
+function renderRTQTable(rows){
+  let arr=rows.slice();
+  if(SORT.rtqTable)arr=sortData(arr,SORT.rtqTable.key,SORT.rtqTable.dir);
+  const per=60,pages=Math.max(1,Math.ceil(arr.length/per));rtqTablePage=Math.min(rtqTablePage,pages);
+  const sl=arr.slice((rtqTablePage-1)*per,rtqTablePage*per);
+  $('rtqTableHead').innerHTML=`<tr><th class="left sortable" data-sort="track">Tracking<span class="sort-icon">⇅</span></th><th class="left sortable" data-sort="status">Status<span class="sort-icon">⇅</span></th><th class="left sortable" data-sort="currentHub">Hub<span class="sort-icon">⇅</span></th><th class="left sortable" data-sort="customer">Customer<span class="sort-icon">⇅</span></th><th class="left sortable" data-sort="shipper">Shipper<span class="sort-icon">⇅</span></th><th class="left sortable" data-sort="city">City<span class="sort-icon">⇅</span></th><th class="sortable" data-sort="ofdTimes">Attempt<span class="sort-icon">⇅</span></th><th class="left sortable" data-sort="create">Create<span class="sort-icon">⇅</span></th></tr>`;
+  $('rtqTableBody').innerHTML=sl.length?sl.map((r,i)=>{const st=r.status==='SIGN'?'sign':r.status==='OFD'?'ofd':r.status==='INBOUND'?'inbound':'other';return `<tr data-track="${esc(r.track)}"><td class="left mono" style="color:var(--violet);font-weight:600">${esc(r.track)}</td><td class="left"><span class="status-badge ${st}">${esc(r.status)}</span></td><td class="left">${esc(r.currentHub)}</td><td class="left">${esc(r.customer)}</td><td class="left">${esc(r.shipper)}</td><td class="left">${esc(r.city)}</td><td>${r.ofdTimes||'—'}</td><td class="left mono">${esc(r.create||'—')}</td></tr>`}).join(''):'<tr><td colspan="8" class="empty">No returns match your filters</td></tr>';
+  $$('#rtqTableBody tr').forEach(tr=>tr.onclick=()=>{const rec=rows.find(r=>r.track===tr.dataset.track);if(rec)openModalRTQ([rec],rec.track)});
+  $('rtqPgn').innerHTML=`<span>Page ${rtqTablePage} of ${pages} · ${rows.length} records</span><div class="pages"><button class="page-btn" ${rtqTablePage===1?'disabled':''} data-tp="${rtqTablePage-1}">‹</button><span class="page-btn active">${rtqTablePage}</span><button class="page-btn" ${rtqTablePage===pages?'disabled':''} data-tp="${rtqTablePage+1}">›</button></div>`;
+  $$('#rtqPgn [data-tp]').forEach(b=>b.onclick=()=>{rtqTablePage=Number(b.dataset.tp);renderRTQTable(rows)});
+  $$('#rtqTableHead th.sortable').forEach(th=>{const key=th.dataset.sort;const isThis=SORT.rtqTable&&SORT.rtqTable.key===key;th.classList.toggle('asc',isThis&&SORT.rtqTable.dir===1);th.classList.toggle('desc',isThis&&SORT.rtqTable.dir===-1);th.querySelector('.sort-icon').textContent=isThis?(SORT.rtqTable.dir===1?'▲':'▼'):'⇅';th.onclick=()=>{if(!SORT.rtqTable||SORT.rtqTable.key!==key)SORT.rtqTable={key,dir:-1};else SORT.rtqTable.dir*=-1;renderRTQTable(rows)}});
+}
+
+/* ═══ MODAL ═══ */
+function openModal(rows,title){modalRows=rows;$('modalTitle').textContent=title;$('modalSub').textContent=rows.length.toLocaleString()+' shipments';$('modalBody').innerHTML=rows.slice(0,300).map(r=>`<div class="shipment"><div><strong>${esc(r.track)}</strong><div class="meta-1">${esc(r.driver)} · ${esc(r.shipper)}</div><div class="meta-2">${esc(r.district||'—')} · ${esc(r.city||'—')} · ${esc(r.payType)}</div>${r.fail?`<div class="meta-3">✕ ${esc(r.fail)}</div>`:''}</div></div>`).join('')+(rows.length>300?`<div class="empty">${rows.length-300} more</div>`:'');$('modal').classList.add('open')}
+
+function openModalRTQ(rows,title){
+  modalRows=rows;
+  $('modalTitle').textContent=title;
+  $('modalSub').textContent=rows.length.toLocaleString()+' returns';
+  const st=r=>r.status==='SIGN'?'sign':r.status==='OFD'?'ofd':r.status==='INBOUND'?'inbound':'other';
+  $('modalBody').innerHTML=rows.slice(0,300).map(r=>`<div class="shipment"><div>
+    <strong>${esc(r.track)}</strong>
+    <div class="meta-1">${esc(r.customer)} · ${esc(r.shipper)} · ${esc(r.driver)}</div>
+    <div class="meta-2">${esc(r.city)} · ${esc(r.district)} · Attempt ${r.ofdTimes||'—'} · ${esc(r.create||'—')}${r.weight?' · '+r.weight+'g':''}</div>
+    ${r.pkgException?`<div class="meta-3">⚠ Package: ${esc(r.pkgException)}</div>`:''}
+    ${r.deliveryException?`<div class="meta-3">⚠ Delivery: ${esc(r.deliveryException)}</div>`:''}
+    </div><span class="status-badge ${st(r)}">${esc(r.status)}</span></div>`).join('')+(rows.length>300?`<div class="empty">${rows.length-300} more</div>`:'');
+  $('modal').classList.add('open');
+}
+function closeModal(){$('modal').classList.remove('open')}
+
+/* ═══ PER-SECTION EXPORT & CAPTURE ═══ */
+function getProcessedData(section){
+  if(section==='dashboard'||!section.startsWith('rtq')){
+    /* OFD sections */
+    const rows=filteredOFD();
+    if(section==='dashboard'){
+      const o={total:rows.length,signed:rows.filter(r=>r.result==='sign').length,failed:rows.filter(r=>r.result!=='sign').length,
+        rate:rows.length?+(rows.filter(r=>r.result==='sign').length/rows.length*100).toFixed(1):0,
+        codCollected:Math.round(rows.filter(r=>r.result==='sign').reduce((a,r)=>a+r.cash+r.pos,0)),
+        drivers:new Set(rows.map(r=>r.driver)).size,clients:new Set(rows.map(r=>r.shipper)).size};
+      return Object.entries(o).map(([k,v])=>({Metric:k,Value:v}));
+    }
+    if(section==='failures'){const m={};rows.filter(r=>r.result!=='sign').forEach(r=>{const k=r.fail||'Unknown';m[k]=(m[k]||0)+1});return Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([n,c],i)=>({Rank:i+1,Reason:n,Count:c}))}
+    if(section==='attempts'){const m={};rows.forEach(r=>{if(!m[r.ofdNum])m[r.ofdNum]={n:r.ofdNum,t:0,s:0};m[r.ofdNum].t++;if(r.result==='sign')m[r.ofdNum].s++});return Object.values(m).sort((a,b)=>a.n-b.n).map(x=>({Attempt:x.n,Total:x.t,Signed:x.s,Failed:x.t-x.s,'Rate %':x.t?+((x.s/x.t)*100).toFixed(1):0}))}
+    if(section==='cod'){const g=[['COD',rows.filter(r=>r.payType==='COD')],['Pre-paid',rows.filter(r=>r.payType!=='COD')]];return g.map(([n,rs])=>{const s=rs.filter(r=>r.result==='sign'),cash=s.reduce((a,r)=>a+r.cash+r.pos,0);return {Type:n,Total:rs.length,Delivered:s.length,Failed:rs.length-s.length,'Rate %':rs.length?+((s.length/rs.length)*100).toFixed(1):0,'Cash SAR':Math.round(cash)}})}
+    if(section==='priority')return aggregate(rows,'shipper').sort((a,b)=>b.t-a.t).slice(0,6).map((c,i)=>({Rank:i+1,Client:c.n,Total:c.t,Delivered:c.s,Failed:c.f,'Rate %':+((c.s/c.t)*100).toFixed(1)}));
+    if(section==='calling')return rows.filter(r=>r.fail.toLowerCase().includes('no answer')).sort((a,b)=>b.calls-a.calls).slice(0,80).map((r,i)=>({Rank:i+1,Driver:r.driver,Tracking:r.track,Calls:r.calls,Fail:r.fail}));
+    if(section==='signrate')return aggregate(rows,'driver').map((x,i)=>({Rank:i+1,Driver:x.n,Total:x.t,Signed:x.s,Failed:x.f,'Rate %':+((x.s/x.t)*100).toFixed(1),'Gap %':+((x.s/x.t*100)-target).toFixed(1)}));
+    if(section==='quality')return [{Valid:ofdData.length,UnknownDrivers:ofdData.filter(r=>r.driver==='Unknown').length,UnknownClients:ofdData.filter(r=>r.shipper==='Unknown').length}];
+    return rows;
+  }
+  /* RTQ sections */
+  const rows=filteredRTQ();
+  if(section==='rtqDashboard'){const total=rows.length;const kpi={totalReturns:total,signed:rows.filter(r=>r.status==='SIGN').length,ofd:rows.filter(r=>r.status==='OFD').length,inbound:rows.filter(r=>r.status==='INBOUND').length,notYetOfd:rows.filter(r=>r.ofdTimes===0).length,totalWeightKg:Math.round(rows.reduce((a,r)=>a+r.weight,0)/1000)};return Object.entries(kpi).map(([k,v])=>({Metric:k,Value:v}))}
+  if(section==='rtqStatus'){const m={};rows.forEach(r=>{if(!m[r.status])m[r.status]={n:r.status,t:0,sign:0};const o=m[r.status];o.t++;if(r.sign)o.sign++});return Object.values(m).sort((a,b)=>b.t-a.t).map(x=>({Status:x.n,Total:x.t,'With Sign':x.sign,'Sign %':x.t?+((x.sign/x.t)*100).toFixed(1):0}))}
+  if(section==='rtqAttempts'){const m={};rows.forEach(r=>{const k=r.ofdTimes===0?'Not yet':r.ofdTimes;if(!m[k])m[k]={n:k,t:0,sign:0,ofd:0,inbound:0};const o=m[k];o.t++;if(r.status==='SIGN')o.sign++;else if(r.status==='OFD')o.ofd++;else if(r.status==='INBOUND')o.inbound++});return Object.values(m).sort((a,b)=>{if(a.n==='Not yet')return -1;if(b.n==='Not yet')return 1;return a.n-b.n}).map(x=>({Attempt:x.n,Total:x.t,Signed:x.sign,'OFD now':x.ofd,Inbound:x.inbound,'Success %':x.t?+((x.sign/x.t)*100).toFixed(1):0}))}
+  if(section==='rtqNotOfd')return rows.filter(r=>r.ofdTimes===0).map(r=>({Tracking:r.track,Status:r.status,Hub:r.currentHub,Customer:r.customer,Shipper:r.shipper,City:r.city,District:r.district,Weight_g:r.weight,Create:r.create}));
+  if(section==='rtqTiming'){const buckets=[{l:'0–1 day',min:0,max:1},{l:'2–3 days',min:1,max:3},{l:'4–7 days',min:3,max:7},{l:'8–14 days',min:7,max:14},{l:'15+ days',min:14,max:99999}];const now=new Date();buckets.forEach(b=>b.n=0);rows.forEach(r=>{if(!r.create)return;const age=(now-new Date(r.create))/86400000;for(const b of buckets){if(age>=b.min&&age<b.max){b.n++;break}}});return buckets.map(b=>({Bucket:b.l,Count:b.n,'Share %':rows.length?+((b.n/rows.length)*100).toFixed(1):0}))}
+  if(section==='rtqGeo'){const geo={};rows.forEach(r=>{const k=r.state+'|'+r.city+'|'+r.district;if(!geo[k])geo[k]={state:r.state,city:r.city,district:r.district,n:0,sign:0};geo[k].n++;if(r.status==='SIGN')geo[k].sign++});return Object.values(geo).sort((a,b)=>b.n-a.n).slice(0,200).map(g=>({State:g.state,City:g.city,District:g.district,Returns:g.n,Signed:g.sign,'Rate %':g.n?+((g.sign/g.n)*100).toFixed(1):0}))}
+  if(section==='rtqDrivers'){const dm={};rows.forEach(r=>{const k=r.driver+'|'+r.driverAccount;if(!dm[k])dm[k]={d:r.driver,a:r.driverAccount,t:0,sign:0,ofd:0,inbound:0};const o=dm[k];o.t++;if(r.status==='SIGN')o.sign++;else if(r.status==='OFD')o.ofd++;else if(r.status==='INBOUND')o.inbound++});return Object.values(dm).sort((a,b)=>b.t-a.t).map(x=>({Driver:x.d,Account:x.a,Returns:x.t,Signed:x.sign,OFD:x.ofd,Inbound:x.inbound}))}
+  if(section==='rtqWeight'){const wMap={};rows.forEach(r=>{if(!wMap[r.customer])wMap[r.customer]={c:r.customer,cnt:0,total:0};wMap[r.customer].cnt++;wMap[r.customer].total+=r.weight});return Object.values(wMap).sort((a,b)=>b.total-a.total).map(w=>({Customer:w.c,Returns:w.cnt,'Total weight kg':+(w.total/1000).toFixed(1),'Avg weight g':Math.round(w.total/w.cnt)}))}
+  if(section==='rtqExceptions'){const p={},d={};rows.forEach(r=>{if(r.pkgException)p[r.pkgException]=(p[r.pkgException]||0)+1;if(r.deliveryException)d[r.deliveryException]=(d[r.deliveryException]||0)+1});return Object.entries(p).sort((a,b)=>b[1]-a[1]).map(([n,c],i)=>({Type:'Package',Rank:i+1,Exception:n,Count:c,'Share %':rows.length?+((c/rows.length)*100).toFixed(1):0})).concat(Object.entries(d).sort((a,b)=>b[1]-a[1]).map(([n,c],i)=>({Type:'Delivery',Rank:i+1,Exception:n,Count:c,'Share %':rows.length?+((c/rows.length)*100).toFixed(1):0})))}
+  if(section==='rtqClients'){const cMap={},sMap={};rows.forEach(r=>{if(!cMap[r.customer])cMap[r.customer]={n:r.customer,t:0,sign:0};cMap[r.customer].t++;if(r.status==='SIGN')cMap[r.customer].sign++;if(!sMap[r.shipper])sMap[r.shipper]={n:r.shipper,t:0,sign:0};sMap[r.shipper].t++;if(r.status==='SIGN')sMap[r.shipper].sign++});return Object.values(cMap).map(c=>({Type:'Customer',Name:c.n,Returns:c.t,Signed:c.sign,'Rate %':c.t?+((c.sign/c.t)*100).toFixed(1):0})).concat(Object.values(sMap).map(s=>({Type:'Shipper',Name:s.n,Returns:s.t,Signed:s.sign,'Rate %':s.t?+((s.sign/s.t)*100).toFixed(1):0})))}
+  if(section==='rtqHubs'){const c={},f={},fi={};rows.forEach(r=>{c[r.currentHub]=(c[r.currentHub]||0)+1;f[r.fromHub]=(f[r.fromHub]||0)+1;fi[r.finalHub]=(fi[r.finalHub]||0)+1});const tot=rows.length||1;return Object.entries(c).sort((a,b)=>b[1]-a[1]).map(([n,v])=>({Type:'Current',Hub:n,Returns:v,'Share %':+((v/tot)*100).toFixed(1)})).concat(Object.entries(f).sort((a,b)=>b[1]-a[1]).map(([n,v])=>({Type:'From',Hub:n,Returns:v,'Share %':+((v/tot)*100).toFixed(1)})).concat(Object.entries(fi).sort((a,b)=>b[1]-a[1]).map(([n,v])=>({Type:'Final',Hub:n,Returns:v,'Share %':+((v/tot)*100).toFixed(1)}))))}
+  if(section==='rtqTable')return rows.map(r=>({Tracking:r.track,'Package ID':r.packageId,'Package No':r.packageNo,'From Hub':r.fromHub,'Current Hub':r.currentHub,'Final Hub':r.finalHub,Status:r.status,'Package Exception':r.pkgException,'Delivery Exception':r.deliveryException,Customer:r.customer,Shipper:r.shipper,Recipient:r.recipient,State:r.state,City:r.city,District:r.district,Phone:r.phone,COD:r.cod,Declare:r.declare,Customs:r.customs,Weight_g:r.weight,Appointment:r.appointment,'OFD Times':r.ofdTimes,Driver:r.driver,'Driver Account':r.driverAccount,Location:r.location,'Payment Type':r.payType,'Biz Type':r.bizType,Create:r.create,Collect:r.collect,Load:r.load,Sign:r.sign,Volume:r.volume}));
+  return rows;
+}
+function getRawData(section){return section.startsWith('rtq')?rawRTQRows:rawOFDRows}
+
+function exportSection(section){
+  const processed=getProcessedData(section);
+  const raw=getRawData(section);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(processed.length?processed:[{Info:'No data'}]),'Processed Data');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(raw.length?raw:[{Info:'No raw data'}]),'Source Data');
+  XLSX.writeFile(wb,`GFS_${TAB_LABELS[section]||section}_${new Date().toISOString().slice(0,10)}.xlsx`.replace(/\s+/g,'_'));
+  toast('Excel downloaded (2 sheets)');
+}
+
+async function captureSection(section){
+  const el=document.getElementById(section);
+  if(!el){toast('Cannot capture');return}
+  loading(true,'Preparing screenshot…');
+  /* temporarily mark active for capture */
+  const wasHidden=!el.classList.contains('active');
+  if(wasHidden)el.classList.add('active');
+  try{
+    const canvas=await html2canvas(el,{scale:2,backgroundColor:cssVar('--bg')||'#f4f7fb',useCORS:true,logging:false});
+    canvas.toBlob(blob=>{
+      const fname=`GFS_${TAB_LABELS[section]||section}_${new Date().toISOString().slice(0,10)}.png`.replace(/\s+/g,'_');
+      try{
+        if(navigator.clipboard&&window.ClipboardItem){
+          navigator.clipboard.write([new ClipboardItem({'image/png':blob})]).then(()=>toast('Screenshot copied!')).catch(()=>{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fname;a.click();toast('Screenshot downloaded')});
+        } else {const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fname;a.click();toast('Screenshot downloaded')}
+      }finally{loading(false)}
+    },'image/png',0.95);
+  }catch(e){loading(false);toast('Capture failed: '+e.message)}
+  finally{if(wasHidden)el.classList.remove('active')}
+}
+
+/* ═══ RENDER ALL ═══ */
+function renderAll(){
+  if(ofdData.length){renderOFD();renderOFDAll()}
+  if(rtqData.length){renderRTQAll()}
+  $('reportTitle').textContent=detectedHub+' Report';
+  $('reportMeta').textContent=`UPDATED ${new Date().toLocaleString('en-GB')} · OFD: ${ofdData.length.toLocaleString()} · RTQ: ${rtqData.length.toLocaleString()}`;
+  $('sideDataset').innerHTML=`OFD: ${ofdData.length.toLocaleString()} rows<br>RTQ: ${rtqData.length.toLocaleString()} rows`;
+}
+
+/* ═══ THEME ═══ */
+function setTheme(t){document.documentElement.setAttribute('data-theme',t);try{localStorage.setItem('gfs-theme',t)}catch(e){}if(ofdData.length)renderOFD();if(rtqData.length)renderRTQAll()}
+function toggleTheme(){setTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark')}
+(function(){try{const s=localStorage.getItem('gfs-theme');if(s)document.documentElement.setAttribute('data-theme',s)}catch(e){}})();
+
+/* ═══ BOOTSTRAP ═══ */
+$('brandLogo').innerHTML=gfsLogoSVG();$('sideLogo').innerHTML=gfsLogoSVG();
+function wireDrop(id,inputId,handler){
+  const dz=$(id),fi=$(inputId);
+  dz.addEventListener('click',()=>fi.click());
+  fi.addEventListener('change',e=>handler([...e.target.files]));
+  ['dragenter','dragover'].forEach(x=>dz.addEventListener(x,e=>{e.preventDefault();dz.classList.add('drag')}));
+  ['dragleave','drop'].forEach(x=>dz.addEventListener(x,e=>{e.preventDefault();dz.classList.remove('drag')}));
+  dz.addEventListener('drop',e=>handler([...e.dataTransfer.files]));
+}
+wireDrop('dropzoneOFD','fileInputOFD',importOFD);
+wireDrop('dropzoneRTQ','fileInputRTQ',importRTQ);
+$$('#navOFD .nav-btn').forEach(b=>b.onclick=()=>openTab(b.dataset.section));
+$$('#navRTQ .nav-btn').forEach(b=>b.onclick=()=>openTab(b.dataset.section));
+$$('.tab[data-view]').forEach(b=>b.onclick=()=>{view=b.dataset.view;pageNo=1;$$('.tab[data-view]').forEach(x=>x.classList.toggle('active',x===b));renderOFD()});
+$('cityFilter').onchange=()=>{ofdF.city=$('cityFilter').value;pageNo=1;renderAll()};
+$('resultFilter').onchange=()=>{ofdF.result=$('resultFilter').value;pageNo=1;renderAll()};
+$('paymentFilter').onchange=()=>{ofdF.payment=$('paymentFilter').value;pageNo=1;renderAll()};
+$('searchInput').oninput=()=>{pageNo=1;renderOFD()};
+$('clearFilters').onclick=()=>{ofdF={hubs:new Set(),city:'',result:'',payment:''};$('cityFilter').value='';$('resultFilter').value='';$('paymentFilter').value='';$('searchInput').value='';setupOFDFilters();pageNo=1;renderAll()};
+$('newBtn').onclick=()=>location.reload();
+$('themeBtn1').onclick=toggleTheme;$('themeBtn2').onclick=toggleTheme;
+$('closeModal').onclick=closeModal;$('modal').onclick=e=>{if(e.target===$('modal'))closeModal()};
+$('copyBtn').onclick=async()=>{const txt=modalRows.map(r=>r.track||r.packageNo||'').filter(Boolean).join('\n');if(!txt){toast('No IDs');return}try{await navigator.clipboard.writeText(txt);toast(`Copied ${modalRows.length} IDs`)}catch{const t=document.createElement('textarea');t.value=txt;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();toast(`Copied ${modalRows.length} IDs`)}};
+$('copyFullBtn').onclick=async()=>{
+  const isR=modalRows.length&&'currentHub' in modalRows[0];
+  let header,txt;
+  if(isR){header='Tracking\tStatus\tHub\tCustomer\tShipper\tCity\tDistrict\tWeight(g)\tAttempt\tDriver\tCreate\n';txt=modalRows.map(r=>[r.track,r.status,r.currentHub,r.customer,r.shipper,r.city,r.district,r.weight,r.ofdTimes,r.driver,r.create].join('\t')).join('\n')}
+  else{header='Tracking\tDriver\tShipper\tCity\tResult\tFail\n';txt=modalRows.map(r=>[r.track,r.driver,r.shipper,r.city,r.result==='sign'?'Delivered':'Failed',r.fail].join('\t')).join('\n')}
+  try{await navigator.clipboard.writeText(header+txt);toast(`Copied ${modalRows.length} rows`)}catch{const t=document.createElement('textarea');t.value=header+txt;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();toast(`Copied ${modalRows.length} rows`)}};
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+/* Bind capture & export buttons */
+document.addEventListener('click',e=>{
+  const cap=e.target.closest('[data-capture]');
+  if(cap){captureSection(cap.dataset.capture);return}
+  const exp=e.target.closest('[data-export-sec]');
+  if(exp){exportSection(exp.dataset.exportSec);return}
+});
+</script>
+</body></html>
